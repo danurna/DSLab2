@@ -1,10 +1,9 @@
-package client;
-
 import message.Response;
 import message.response.LoginResponse;
 import message.response.MessageResponse;
 
 import java.io.IOException;
+import client.IClientCli;
 
 /**
  * Created with IntelliJ IDEA.
@@ -14,6 +13,11 @@ import java.io.IOException;
  * To change this template use File | Settings | File Templates.
  */
 public class MyClient implements IClientCli{
+
+    public static void main(String[] args){
+
+    }
+
     @Override
     public LoginResponse login(String username, String password) throws IOException {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
