@@ -1,5 +1,6 @@
 package client;
 
+import cli.Command;
 import message.Response;
 import message.response.*;
 
@@ -25,6 +26,7 @@ public interface IClientCli {
 	 * @return status whether the authentication was successful or not
 	 * @throws IOException if an I/O error occurs
 	 */
+    @Command
 	LoginResponse login(String username, String password) throws IOException;
 
 	/**
@@ -40,6 +42,7 @@ public interface IClientCli {
 	 * a {@link MessageResponse} if an error occurred
 	 * @throws IOException if an I/O error occurs
 	 */
+    @Command
 	Response credits() throws IOException;
 
 	/**
@@ -56,6 +59,7 @@ public interface IClientCli {
 	 * a {@link MessageResponse} if an error occurred
 	 * @throws IOException if an I/O error occurs
 	 */
+    @Command
 	Response buy(long credits) throws IOException;
 
 	/**
@@ -75,6 +79,7 @@ public interface IClientCli {
 	 * a {@link MessageResponse} if an error occurred
 	 * @throws IOException if an I/O error occurs
 	 */
+    @Command
 	Response list() throws IOException;
 
 	/**
@@ -96,6 +101,7 @@ public interface IClientCli {
 	 * @throws IOException if an I/O error occurs
 	 * @see model.DownloadTicket
 	 */
+    @Command
 	Response download(String filename) throws IOException;
 
 	/**
@@ -110,6 +116,7 @@ public interface IClientCli {
 	 * @return message stating whether the upload was successful
 	 * @throws IOException if an I/O error occurs
 	 */
+    @Command
 	MessageResponse upload(String filename) throws IOException;
 
 	/**
@@ -123,6 +130,7 @@ public interface IClientCli {
 	 * @return message stating whether the logout was successful
 	 * @throws IOException if an I/O error occurs
 	 */
+    @Command
 	MessageResponse logout() throws IOException;
 
 	/**
@@ -140,5 +148,6 @@ public interface IClientCli {
 	 * @return exit message
 	 * @throws IOException if an I/O error occurs
 	 */
+    @Command
 	MessageResponse exit() throws IOException;
 }

@@ -2,7 +2,10 @@ package util;
 
 import cli.Shell;
 import client.IClientCli;
+import client.MyClientCli;
 import proxy.IProxyCli;
+import proxy.MyProxy;
+import proxy.MyProxyCli;
 import server.IFileServerCli;
 
 /**
@@ -19,7 +22,10 @@ public class ComponentFactory {
 	 */
 	public IClientCli startClient(Config config, Shell shell) throws Exception {
 		// TODO: create a new client instance (including a Shell) and start it
-		return null;
+        IClientCli clientCli = new MyClientCli();
+        shell.register(clientCli);
+        shell.run();
+		return clientCli;
 	}
 
 	/**
@@ -32,7 +38,10 @@ public class ComponentFactory {
 	 */
 	public IProxyCli startProxy(Config config, Shell shell) throws Exception {
 		// TODO: create a new proxy instance (including a Shell) and start it
-		return null;
+        IProxyCli proxyCli = new MyProxyCli(new MyProxy(config));
+        shell.register(proxyCli);
+        shell.run();
+		return proxyCli;
 	}
 
 	/**
