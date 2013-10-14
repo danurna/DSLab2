@@ -105,7 +105,7 @@ public interface IProxy {
 	 * <p/>
 	 * <b>Request</b>:<br/>
 	 * {@code !upload &lt;filename&gt; &lt;content&gt;}<br/>
-	 * <b>Response:</b><br/>
+	 * <b>Response:</b><br/>                       @Command
 	 * {@code !upload &lt;message&gt;}<br/>
 	 *
 	 * @param request the file upload request
