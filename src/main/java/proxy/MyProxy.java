@@ -213,8 +213,7 @@ public class MyProxy implements IProxy{
                         //Check for each fileserver, if timeout counter is greater than the
                         //value defined in config class. If true, set fileserver entry to offline.
                         for(FileserverEntity entity: fileserverMap.values()){
-                            java.util.Date date = new java.util.Date();
-                            long difference = MyUtils.compareTwoTimeStamps(new Timestamp(date.getTime()), entity.getLastAliveTime());
+                            long difference = MyUtils.compareTwoTimeStamps(MyUtils.getCurrentTimestamp(), entity.getLastAliveTime());
                             long timeout = Long.parseLong(config.getString("fileserver.timeout"));
                             if(difference > timeout){
                                 entity.setOnline(false);
@@ -233,20 +232,32 @@ public class MyProxy implements IProxy{
         Runnable clientCommunication = new Runnable() {
             @Override
             public void run() {
-                BufferedReader in;
-                PrintWriter out;
+                BufferedReader in = null;
+                PrintWriter out = null;
+                ObjectOutputStream objectOut = null;
+                ObjectInputStream objectIn = null;
+
                 try {
                     out = new PrintWriter(clientSocket.getOutputStream(), true);
                     in = new BufferedReader( new InputStreamReader( clientSocket.getInputStream() ) );
 
-                    String msg;
-                    while( (msg = in.readLine()) != null ){
-                        System.out.println("Client sent: " + msg);
-                        out.println("Received msg!");
+                    objectIn = new ObjectInputStream(clientSocket.getInputStream());
+
+                    Object obj;
+                    while( (obj = objectIn.readObject()) != null ){
+                        System.out.println("Client sent: " + obj);
+
+                        objectOut = new ObjectOutputStream(clientSocket.getOutputStream());
+                        objectOut.writeObject(new LoginResponse(LoginResponse.Type.SUCCESS));
+                        objectOut.flush();
                     }
 
+                } catch (EOFException e){
+                    System.out.println("Reached EOF");
                 } catch (IOException e) {
                     e.printStackTrace();
+                } catch (ClassNotFoundException e) {
+                    e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
                 }
 
             }
@@ -255,7 +266,12 @@ public class MyProxy implements IProxy{
         executor.execute( clientCommunication );
     }
 
-    public void handleReceivedPacket(DatagramPacket packet){
+    /**
+     * Handle the received UDP packet.
+     * Synchronized because we are adding users to the fileserver Map.
+     * @param packet Received UDP packet to handle.
+     */
+    public synchronized void handleReceivedPacket(DatagramPacket packet){
         String received = new String(packet.getData(), 0, packet.getLength());
         System.out.println("Packet received " + received);
 

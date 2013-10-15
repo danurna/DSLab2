@@ -2,15 +2,15 @@ package proxy;
 
 import cli.Command;
 import message.Response;
+import message.request.BuyRequest;
+import message.request.LoginRequest;
+import message.response.LoginResponse;
 import message.response.MessageResponse;
 import model.FileserverEntity;
 import model.UserEntity;
 import model.UserInfo;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -61,22 +61,39 @@ public class MyProxyCli implements IProxyCli{
     public void send() throws IOException {
         System.out.println("send()");
         Socket socket = null;
-        PrintWriter out = null;
-        BufferedReader in = null;
+        ObjectOutputStream objectOut = null;
+        ObjectInputStream objectIn = null;
 
         try{
             socket = new Socket("localhost", 12500);
-            out = new PrintWriter(socket.getOutputStream(), true);
-            in = new BufferedReader(new InputStreamReader( socket.getInputStream() ) );
+
+            objectOut = new ObjectOutputStream(socket.getOutputStream());
+            objectOut.writeObject(new LoginRequest("anna", "12345"));
+            objectOut.flush();
+
+            objectIn = new ObjectInputStream(socket.getInputStream());
+            Object obj;
+
+            if( (obj = objectIn.readObject()) != null ){
+                 System.out.println("echo: " + obj);
+                objectIn.close();
+                try {
+                    Thread.sleep(1000);
+                } catch(InterruptedException ex) {
+                    Thread.currentThread().interrupt();
+                }
+                objectOut.writeObject(new LoginRequest("bobo", "12345"));
+                objectOut.flush();
+
+            }
+
         }catch(Exception e){
             e.printStackTrace();
+            return;
         }
 
-        out.println("Hello!");
-        System.out.println("echo: " + in.readLine());
-
-        out.close();
-        in.close();
+        objectIn.close();
+        objectOut.close();
         socket.close();
     }
 

@@ -1,5 +1,7 @@
 package util;
 
+import java.sql.Timestamp;
+
 /**
  * Created with IntelliJ IDEA.
  * User: danielwiturna
@@ -9,8 +11,6 @@ package util;
  */
 public class MyUtils {
 
-
-
     /**
      *  From http://stackoverflow.com/questions/10578674/find-hour-or-minute-difference-between-2-java-sql-timestamps
      *
@@ -18,7 +18,7 @@ public class MyUtils {
      * @param oldTime
      * @return Difference between given timestamps in milliseconds.
      */
-    public static long compareTwoTimeStamps(java.sql.Timestamp currentTime, java.sql.Timestamp oldTime)
+    public static long compareTwoTimeStamps(Timestamp currentTime, Timestamp oldTime)
     {
         long milliseconds1 = oldTime.getTime();
         long milliseconds2 = currentTime.getTime();
@@ -26,5 +26,15 @@ public class MyUtils {
         long diff = milliseconds2 - milliseconds1;
 
         return diff;
+    }
+
+
+    /**
+     * Returns current timestamp.
+     * @return timestamp
+     */
+    public static Timestamp getCurrentTimestamp(){
+        java.util.Date date = new java.util.Date();
+        return new Timestamp(date.getTime());
     }
 }

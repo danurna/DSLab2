@@ -1,5 +1,7 @@
 package model;
 
+import util.MyUtils;
+
 import java.net.InetAddress;
 import java.sql.Timestamp;
 
@@ -22,8 +24,7 @@ public class FileserverEntity {
         this.port = port;
         this.usage = usage;
         this.online = online;
-        java.util.Date date = new java.util.Date();
-        this.lastAliveTime = new Timestamp(date.getTime());
+        this.updateLastAliveTime();
     }
 
     public InetAddress getAddress() {
@@ -55,8 +56,7 @@ public class FileserverEntity {
     }
 
     public void updateLastAliveTime(){
-        java.util.Date date = new java.util.Date();
-        this.lastAliveTime = new Timestamp(date.getTime());
+        this.lastAliveTime = MyUtils.getCurrentTimestamp();
     }
 
     public FileServerInfo getFileServerInfo(){
