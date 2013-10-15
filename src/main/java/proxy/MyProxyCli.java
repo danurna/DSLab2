@@ -74,9 +74,9 @@ public class MyProxyCli implements IProxyCli{
             objectIn = new ObjectInputStream(socket.getInputStream());
             Object obj;
 
-            if( (obj = objectIn.readObject()) != null ){
-                 System.out.println("echo: " + obj);
-                objectIn.close();
+            while( (obj = objectIn.readObject()) != null ){
+                System.out.println("echo: " + obj);
+
                 try {
                     Thread.sleep(1000);
                 } catch(InterruptedException ex) {
@@ -84,7 +84,6 @@ public class MyProxyCli implements IProxyCli{
                 }
                 objectOut.writeObject(new LoginRequest("bobo", "12345"));
                 objectOut.flush();
-
             }
 
         }catch(Exception e){

@@ -238,16 +238,13 @@ public class MyProxy implements IProxy{
                 ObjectInputStream objectIn = null;
 
                 try {
-                    out = new PrintWriter(clientSocket.getOutputStream(), true);
-                    in = new BufferedReader( new InputStreamReader( clientSocket.getInputStream() ) );
-
+                    objectOut = new ObjectOutputStream(clientSocket.getOutputStream());
                     objectIn = new ObjectInputStream(clientSocket.getInputStream());
 
                     Object obj;
                     while( (obj = objectIn.readObject()) != null ){
                         System.out.println("Client sent: " + obj);
 
-                        objectOut = new ObjectOutputStream(clientSocket.getOutputStream());
                         objectOut.writeObject(new LoginResponse(LoginResponse.Type.SUCCESS));
                         objectOut.flush();
                     }
