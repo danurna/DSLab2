@@ -3,7 +3,9 @@ package proxy;
 import cli.Command;
 import message.Response;
 import message.request.BuyRequest;
+import message.request.CreditsRequest;
 import message.request.LoginRequest;
+import message.request.LogoutRequest;
 import message.response.LoginResponse;
 import message.response.MessageResponse;
 import model.FileserverEntity;
@@ -82,7 +84,29 @@ public class MyProxyCli implements IProxyCli{
                 } catch(InterruptedException ex) {
                     Thread.currentThread().interrupt();
                 }
-                objectOut.writeObject(new LoginRequest("bobo", "12345"));
+                objectOut.writeObject(new LoginRequest("bill", "23456"));
+                objectOut.flush();
+
+                try {
+                    Thread.sleep(1000);
+                } catch(InterruptedException ex) {
+                    Thread.currentThread().interrupt();
+                }
+                obj = objectIn.readObject();
+                System.out.println("echo: " + obj);
+
+                objectOut.writeObject(new CreditsRequest());
+                objectOut.flush();
+
+                try {
+                    Thread.sleep(1000);
+                } catch(InterruptedException ex) {
+                    Thread.currentThread().interrupt();
+                }
+                obj = objectIn.readObject();
+                System.out.println("echo: " + obj);
+
+                objectOut.writeObject(new LogoutRequest());
                 objectOut.flush();
             }
 

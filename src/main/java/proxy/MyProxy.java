@@ -18,15 +18,11 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.sql.Timestamp;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Properties;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -35,14 +31,14 @@ import java.util.concurrent.TimeUnit;
  * Time: 15:32
  * To change this template use File | Settings | File Templates.
  */
-public class MyProxy implements IProxy{
+public class MyProxy {
     private ExecutorService executor;
     private Config config;
     private Shell shell;
-    private HashMap<String, UserEntity> userMap;
-    private HashMap<String, FileserverEntity> fileserverMap;
+    private ConcurrentHashMap<String, UserEntity> userMap;
+    private ConcurrentHashMap<String, FileserverEntity> fileserverMap;
 
-    public static void main(String[] args){
+    public static void main(String[] args) {
         new MyProxy(new Config("proxy")).run();
     }
 
@@ -56,91 +52,81 @@ public class MyProxy implements IProxy{
         shell.run();
     }
 
-    public MyProxy(Config config){
+    public MyProxy(Config config) {
         this.config = config;
         executor = Executors.newCachedThreadPool();
-        userMap = new HashMap<String, UserEntity>();
-        fileserverMap = new LinkedHashMap<String, FileserverEntity>();
-    }
-
-    @Override
-    public LoginResponse login(LoginRequest request) throws IOException {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    @Override
-    public Response credits() throws IOException {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    @Override
-    public Response buy(BuyRequest credits) throws IOException {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    @Override
-    public Response list() throws IOException {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    @Override
-    public Response download(DownloadTicketRequest request) throws IOException {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    @Override
-    public MessageResponse upload(UploadRequest request) throws IOException {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    @Override
-    public MessageResponse logout() throws IOException {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        userMap = new ConcurrentHashMap<String, UserEntity>();
+        fileserverMap = new ConcurrentHashMap<String, FileserverEntity>();
     }
 
     /**
-     *
-     * @return Array of UserEntities of logged in users.
+     * @return Collection of UserEntities of logged in users.
      */
-    public Collection<UserEntity> getUserList(){
+    public Collection<UserEntity> getUserList() {
         return userMap.values();
     }
 
-    public Collection<FileserverEntity> getFileserverList(){
+    /**
+     * @return Collection of active fileservers.
+     */
+    public Collection<FileserverEntity> getFileserverList() {
         return fileserverMap.values();
     }
 
     /**
+     * Checks for user and password of given login request
+     * @param request login request
+     * @return UserEntitiy of authenticated user. Null, if wrong credentials.
+     */
+    public UserEntity login(LoginRequest request){
+        UserEntity user = userMap.get(request.getUsername());
+        //Exists?
+        if(user == null){
+            return null;
+        }
+        //Right password?
+        if(!user.getPassword().equals(request.getPassword())){
+            return null;
+        }
+
+        return user;
+    }
+
+    /**
+     * Reads user data from users.properties and stores them in
+     * our ConcurrentHashMap userMap.
      *
      * Example data:
      * alice.credits = 200
      * bill.credits = 200
-     *
+     * <p/>
      * alice.password = 12345
      * bill.password = 23456
      */
-    private void readUserProperties(){
+    private void readUserProperties() {
         Properties prop = new Properties();
 
         try {
             //load a properties file
             prop.load(getClass().getClassLoader().getResourceAsStream("user.properties"));
 
-            for(String string: prop.stringPropertyNames()){
+            for (String string : prop.stringPropertyNames()) {
                 String[] splitStrings = string.split("\\.");
-                if(splitStrings.length == 2){
-                    String name = splitStrings[0];
 
-                    if(!userMap.containsKey(name)){
-                        //Create new user info for new user.
-                        String password = prop.getProperty(name+".password");
-                        long credits = Long.parseLong( prop.getProperty(name+".credits") );
+                if (splitStrings.length != 2) {
+                    return;
+                }
 
-                        UserEntity userEntity = new UserEntity(name, password, credits, false);
-                        System.out.println(userEntity.getUserInfo());
-                        userMap.put(name, userEntity);
-                    }
+                String name = splitStrings[0];
 
+                if (!userMap.containsKey(name)) {
+                    //Create new user info for new user.
+                    String password = prop.getProperty(name + ".password");
+                    long credits = Long.parseLong(prop.getProperty(name + ".credits"));
+
+                    UserEntity userEntity = new UserEntity(name, password, credits, false);
+                    System.out.println(userEntity.getUserInfo());
+                    userMap.put(name, userEntity);
                 }
             }
 
@@ -150,20 +136,20 @@ public class MyProxy implements IProxy{
 
     }
 
-    private void createSockets(){
+    private void createSockets() {
 
         Runnable serverCommunicationListen = new Runnable() {
             @Override
             public void run() {
                 ServerSocket serverSocket = null;
-                try{
+                try {
                     serverSocket = new ServerSocket(config.getInt("tcp.port"));
-                }catch(IOException e){
+                } catch (IOException e) {
                     System.err.println("Could not listen on tcp port: " + config.getInt("tcp.port"));
                     return;
                 }
 
-                while(true){
+                while (true) {
                     try {
                         Socket clientSocket = serverSocket.accept();
                         handleClient(clientSocket);
@@ -179,14 +165,14 @@ public class MyProxy implements IProxy{
             @Override
             public void run() {
                 DatagramSocket datagramSocket = null;
-                try{
+                try {
                     datagramSocket = new DatagramSocket(config.getInt("udp.port"));
-                }catch(IOException e){
+                } catch (IOException e) {
                     System.err.println("Could not listen on udp port: " + config.getInt("udp.port"));
                     return;
                 }
 
-                while(true) {
+                while (true) {
                     try {
                         byte[] buf = new byte[256];
                         DatagramPacket packet = new DatagramPacket(buf, buf.length);
@@ -200,22 +186,23 @@ public class MyProxy implements IProxy{
             }
         };
 
-        executor.execute( serverCommunicationListen );
-        executor.execute( serverKeepAliveListen );
+        executor.execute(serverCommunicationListen);
+        executor.execute(serverKeepAliveListen);
     }
 
-    public void createFileserverGC(){
+    public void createFileserverGC() {
         ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1);
 
         scheduledExecutorService.scheduleAtFixedRate(
                 new Runnable() {
-                    @Override public void run() {
+                    @Override
+                    public void run() {
                         //Check for each fileserver, if timeout counter is greater than the
                         //value defined in config class. If true, set fileserver entry to offline.
-                        for(FileserverEntity entity: fileserverMap.values()){
+                        for (FileserverEntity entity : fileserverMap.values()) {
                             long difference = MyUtils.compareTwoTimeStamps(MyUtils.getCurrentTimestamp(), entity.getLastAliveTime());
                             long timeout = Long.parseLong(config.getString("fileserver.timeout"));
-                            if(difference > timeout){
+                            if (difference > timeout) {
                                 entity.setOnline(false);
                             }
                         }
@@ -223,28 +210,29 @@ public class MyProxy implements IProxy{
                 },
                 0 /* Start delay */,
                 config.getInt("fileserver.checkPeriod") /* Period */,
-                TimeUnit.MILLISECONDS );
+                TimeUnit.MILLISECONDS);
     }
 
-    public void handleClient(final Socket clientSocket){
+    public void handleClient(final Socket clientSocket) {
         System.out.println("handle client for socket " + clientSocket);
 
-        ClientProxyBridge clientProxyBridge = new ClientProxyBridge(clientSocket);
+        ClientProxyBridge clientProxyBridge = new ClientProxyBridge(clientSocket, this);
         executor.execute(clientProxyBridge);
     }
 
     /**
      * Handle the received UDP packet.
      * Synchronized because we are adding users to the fileserver Map.
+     *
      * @param packet Received UDP packet to handle.
      */
-    public synchronized void handleReceivedPacket(DatagramPacket packet){
+    public void handleReceivedPacket(DatagramPacket packet) {
         String received = new String(packet.getData(), 0, packet.getLength());
         System.out.println("Packet received " + received);
 
-        if(!fileserverMap.containsKey(received)){
+        if (!fileserverMap.containsKey(received)) {
             fileserverMap.put(received, new FileserverEntity(packet.getAddress(), Integer.parseInt(received), 0, true));
-        }else{
+        } else {
             fileserverMap.get(received).updateLastAliveTime();
             fileserverMap.get(received).setOnline(true);
         }

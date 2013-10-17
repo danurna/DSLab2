@@ -10,7 +10,7 @@ package model;
 public class UserEntity{
     private String name;
     private long credits;
-    private boolean online;
+    private volatile boolean online;
     private String password;
 
     public UserEntity(String name, String password, long credits, boolean online){

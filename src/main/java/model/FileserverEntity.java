@@ -16,8 +16,10 @@ public class FileserverEntity {
     private InetAddress address;
     private int port;
     private long usage;
-    private boolean online;
-    private Timestamp lastAliveTime;
+    //Volatile because variable has no connection to any other variable nor do
+    //we need the previous value.
+    private volatile boolean online;
+    private volatile Timestamp lastAliveTime;
 
     public FileserverEntity(InetAddress address, int port, long usage, boolean online) {
         this.address = address;
