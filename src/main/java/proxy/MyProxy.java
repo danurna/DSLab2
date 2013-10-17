@@ -229,38 +229,8 @@ public class MyProxy implements IProxy{
     public void handleClient(final Socket clientSocket){
         System.out.println("handle client for socket " + clientSocket);
 
-        Runnable clientCommunication = new Runnable() {
-            @Override
-            public void run() {
-                BufferedReader in = null;
-                PrintWriter out = null;
-                ObjectOutputStream objectOut = null;
-                ObjectInputStream objectIn = null;
-
-                try {
-                    objectOut = new ObjectOutputStream(clientSocket.getOutputStream());
-                    objectIn = new ObjectInputStream(clientSocket.getInputStream());
-
-                    Object obj;
-                    while( (obj = objectIn.readObject()) != null ){
-                        System.out.println("Client sent: " + obj);
-
-                        objectOut.writeObject(new LoginResponse(LoginResponse.Type.SUCCESS));
-                        objectOut.flush();
-                    }
-
-                } catch (EOFException e){
-                    System.out.println("Reached EOF");
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } catch (ClassNotFoundException e) {
-                    e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-                }
-
-            }
-        };
-
-        executor.execute( clientCommunication );
+        ClientProxyBridge clientProxyBridge = new ClientProxyBridge(clientSocket);
+        executor.execute(clientProxyBridge);
     }
 
     /**
