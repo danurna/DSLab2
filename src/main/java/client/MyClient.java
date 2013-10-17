@@ -3,7 +3,6 @@ package client;
 import cli.Shell;
 import message.Request;
 import message.Response;
-import message.request.LoginRequest;
 import util.Config;
 
 import java.io.IOException;
@@ -29,7 +28,7 @@ public class MyClient {
     }
 
     public static void main(String[] args){
-        new MyClient(new Config("client.properties")).run();
+        new MyClient(new Config("client")).run();
     }
 
     //Start proxy with system cli for testing

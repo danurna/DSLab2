@@ -2,6 +2,7 @@ package util;
 
 import cli.Shell;
 import client.IClientCli;
+import client.MyClient;
 import client.MyClientCli;
 import proxy.IProxyCli;
 import proxy.MyProxy;
@@ -22,9 +23,9 @@ public class ComponentFactory {
 	 */
 	public IClientCli startClient(Config config, Shell shell) throws Exception {
 		// TODO: create a new client instance (including a Shell) and start it
-        IClientCli clientCli = new MyClientCli();
+        System.out.println("startClient");
+        IClientCli clientCli = new MyClientCli(new MyClient(config));
         shell.register(clientCli);
-        shell.run();
 		return clientCli;
 	}
 
@@ -37,10 +38,10 @@ public class ComponentFactory {
 	 * @throws Exception if an exception occurs
 	 */
 	public IProxyCli startProxy(Config config, Shell shell) throws Exception {
+        System.out.println("startProxy");
 		// TODO: create a new proxy instance (including a Shell) and start it
         IProxyCli proxyCli = new MyProxyCli(new MyProxy(config));
         shell.register(proxyCli);
-        shell.run();
 		return proxyCli;
 	}
 
@@ -53,6 +54,7 @@ public class ComponentFactory {
 	 * @throws Exception if an exception occurs
 	 */
 	public IFileServerCli startFileServer(Config config, Shell shell) throws Exception {
+        System.out.println("startFileServer");
 		// TODO: create a new file server instance (including a Shell) and start it
 		return null;
 	}
