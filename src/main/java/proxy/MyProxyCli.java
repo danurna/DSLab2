@@ -40,6 +40,7 @@ public class MyProxyCli implements IProxyCli{
         for(FileserverEntity fileserver: realProxy.getFileserverList()){
             System.out.println(fileserver);
         }
+        //TODO: use real response type (FileServerInfoResponse)
         return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
@@ -49,6 +50,7 @@ public class MyProxyCli implements IProxyCli{
         for(UserEntity user: realProxy.getUserList()){
             System.out.println(user.getUserInfo());
         }
+        //TODO: use real response type (UserInfoResponse)
         return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
@@ -95,6 +97,17 @@ public class MyProxyCli implements IProxyCli{
                 obj = objectIn.readObject();
                 System.out.println("echo: " + obj);
 
+                objectOut.writeObject(new BuyRequest(50000));
+                objectOut.flush();
+
+                try {
+                    Thread.sleep(1000);
+                } catch(InterruptedException ex) {
+                    Thread.currentThread().interrupt();
+                }
+                obj = objectIn.readObject();
+                System.out.println("echo: " + obj);
+
                 objectOut.writeObject(new CreditsRequest());
                 objectOut.flush();
 
@@ -110,7 +123,9 @@ public class MyProxyCli implements IProxyCli{
                 objectOut.flush();
             }
 
-        }catch(Exception e){
+        } catch (EOFException e){
+            System.out.println("Reached EOF.");
+        } catch(Exception e){
             e.printStackTrace();
             return;
         }

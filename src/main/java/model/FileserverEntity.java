@@ -41,8 +41,8 @@ public class FileserverEntity {
         return usage;
     }
 
-    public void setUsage(long usage) {
-        this.usage = usage;
+    public synchronized void increaseUsage(long increase) {
+        this.usage += increase;
     }
 
     public boolean isOnline() {

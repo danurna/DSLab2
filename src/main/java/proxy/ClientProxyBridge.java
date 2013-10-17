@@ -3,10 +3,7 @@ package proxy;
 import message.Request;
 import message.Response;
 import message.request.*;
-import message.response.CreditsResponse;
-import message.response.ListResponse;
-import message.response.LoginResponse;
-import message.response.MessageResponse;
+import message.response.*;
 import model.UserEntity;
 
 import java.io.EOFException;
@@ -14,13 +11,13 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.net.SocketException;
 
 /**
  * Created with IntelliJ IDEA.
  * User: danielwiturna
  * Date: 17.10.13
  * Time: 12:55
- * To change this template use File | Settings | File Templates.
  */
 public class ClientProxyBridge implements IProxy, Runnable {
     private Socket clientSocket;
@@ -60,7 +57,8 @@ public class ClientProxyBridge implements IProxy, Runnable {
             return null;
         }
 
-        return null;
+        currentUser.increaseCredits(credits.getCredits());
+        return new BuyResponse(currentUser.getCredits());
     }
 
     @Override
@@ -68,6 +66,8 @@ public class ClientProxyBridge implements IProxy, Runnable {
         if(currentUser == null){
             return null;
         }
+
+        //TODO: implement fileserver first
         return null;
     }
 
@@ -76,6 +76,7 @@ public class ClientProxyBridge implements IProxy, Runnable {
         if(currentUser == null){
             return null;
         }
+        //TODO: implement fileserver first
         return null;
     }
 
@@ -84,6 +85,7 @@ public class ClientProxyBridge implements IProxy, Runnable {
         if(currentUser == null){
             return null;
         }
+        //TODO: implement fileserver first
         return null;
     }
 
@@ -93,20 +95,20 @@ public class ClientProxyBridge implements IProxy, Runnable {
             return null;
         }
 
-        boolean loggedOut = false;
+        boolean loggedIn = true;
 
         try{
             clientSocket.close();
-            loggedOut = true;
+            //On successful close, set loggedIn to false.
+            loggedIn = false;
         }catch(IOException e){
             e.printStackTrace();
         }
 
-        if(loggedOut){
-            currentUser.setOnline(false);
-        }
+        //Update user
+        currentUser.setOnline(loggedIn);
 
-        return new MessageResponse(loggedOut ? "Successful logout!" : "Logout failed");
+        return new MessageResponse(loggedIn ? "Logout failed" : "Successful logout!" );
     }
 
     @Override
@@ -132,6 +134,8 @@ public class ClientProxyBridge implements IProxy, Runnable {
 
         } catch (EOFException e){
             System.out.println("Reached EOF");
+        } catch (SocketException e){
+            System.out.println("Socket closed!");
         } catch (IOException e) {
             e.printStackTrace();
         } catch (ClassNotFoundException e) {

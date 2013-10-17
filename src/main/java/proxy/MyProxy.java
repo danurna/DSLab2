@@ -1,13 +1,7 @@
 package proxy;
 
 import cli.Shell;
-import message.Response;
-import message.request.BuyRequest;
-import message.request.DownloadTicketRequest;
 import message.request.LoginRequest;
-import message.request.UploadRequest;
-import message.response.LoginResponse;
-import message.response.MessageResponse;
 import model.FileserverEntity;
 import model.UserEntity;
 import util.Config;
@@ -19,8 +13,6 @@ import java.net.DatagramSocket;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.Properties;
 import java.util.concurrent.*;
 
@@ -34,7 +26,6 @@ import java.util.concurrent.*;
 public class MyProxy {
     private ExecutorService executor;
     private Config config;
-    private Shell shell;
     private ConcurrentHashMap<String, UserEntity> userMap;
     private ConcurrentHashMap<String, FileserverEntity> fileserverMap;
 
@@ -44,10 +35,7 @@ public class MyProxy {
 
     //Start proxy with system cli for testing
     private void run() {
-        this.readUserProperties();
-        this.createSockets();
-        this.createFileserverGC();
-        shell = new Shell("proxyTest", System.out, System.in);
+        Shell shell = new Shell("proxyTest", System.out, System.in);
         shell.register(new MyProxyCli(this));
         shell.run();
     }
@@ -57,6 +45,9 @@ public class MyProxy {
         executor = Executors.newCachedThreadPool();
         userMap = new ConcurrentHashMap<String, UserEntity>();
         fileserverMap = new ConcurrentHashMap<String, FileserverEntity>();
+        this.readUserProperties();
+        this.createSockets();
+        this.createFileserverGC();
     }
 
     /**
@@ -174,7 +165,7 @@ public class MyProxy {
 
                 while (true) {
                     try {
-                        byte[] buf = new byte[256];
+                        byte[] buf = new byte[8];
                         DatagramPacket packet = new DatagramPacket(buf, buf.length);
                         datagramSocket.receive(packet);
                         handleReceivedPacket(packet);

@@ -40,8 +40,12 @@ public class UserEntity{
         return credits;
     }
 
-    public void setCredits(long credits) {
-        this.credits = credits;
+    public synchronized void increaseCredits(long increase){
+        this.credits += increase;
+    }
+
+    public synchronized void decreaseCredits(long decrease){
+        this.credits -= decrease;
     }
 
     public String getName() {
