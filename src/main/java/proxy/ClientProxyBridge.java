@@ -39,6 +39,7 @@ public class ClientProxyBridge implements IProxy, Runnable {
 
         //Set currentUser to authenticated user.
         currentUser = validUser;
+        currentUser.setOnline(true);
         return new LoginResponse(LoginResponse.Type.SUCCESS);
     }
 

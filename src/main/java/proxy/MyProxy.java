@@ -21,7 +21,6 @@ import java.util.concurrent.*;
  * User: danielwiturna
  * Date: 12.10.13
  * Time: 15:32
- * To change this template use File | Settings | File Templates.
  */
 public class MyProxy {
     private ExecutorService executor;
@@ -165,7 +164,7 @@ public class MyProxy {
 
                 while (true) {
                     try {
-                        byte[] buf = new byte[8];
+                        byte[] buf = new byte[256];
                         DatagramPacket packet = new DatagramPacket(buf, buf.length);
                         datagramSocket.receive(packet);
                         handleReceivedPacket(packet);
@@ -220,12 +219,22 @@ public class MyProxy {
     public void handleReceivedPacket(DatagramPacket packet) {
         String received = new String(packet.getData(), 0, packet.getLength());
         System.out.println("Packet received " + received);
+        String splitString[] = received.split("\\ ");
 
-        if (!fileserverMap.containsKey(received)) {
-            fileserverMap.put(received, new FileserverEntity(packet.getAddress(), Integer.parseInt(received), 0, true));
-        } else {
-            fileserverMap.get(received).updateLastAliveTime();
-            fileserverMap.get(received).setOnline(true);
+        if(splitString.length != 2){
+            return;
         }
+
+        if (splitString[0].equals("!isAlive")){
+            String key = splitString[1];
+            if (!fileserverMap.containsKey(key)) {
+                fileserverMap.put(key, new FileserverEntity(packet.getAddress(), Integer.parseInt(key), 0, true));
+            } else {
+                fileserverMap.get(key).updateLastAliveTime();
+                fileserverMap.get(key).setOnline(true);
+            }
+        }
+
+
     }
 }

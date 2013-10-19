@@ -139,7 +139,7 @@ public class MyProxyCli implements IProxyCli{
     public void sendalive() throws IOException {
         InetAddress address = InetAddress.getByName("localhost");
         int port = 12501;
-        String s = "13000";
+        String s = "!isAlive 13000";
         byte[] buf = s.getBytes();
         DatagramSocket toSocket = new DatagramSocket();
         DatagramPacket packet = new DatagramPacket(buf, buf.length, address, port);
