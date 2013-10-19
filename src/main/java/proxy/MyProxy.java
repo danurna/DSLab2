@@ -268,4 +268,19 @@ public class MyProxy {
     public void closeConnections() {
         //TODO: Close all connections
     }
+
+    public FileserverEntity getLeastUsedFileserver() {
+        FileserverEntity entity = null;
+
+        for (FileserverEntity entity1 : fileserverMap.values()) {
+            if (entity == null) {
+                if (entity1.isOnline())
+                    entity = entity1;
+            } else if (entity1.getUsage() < entity.getUsage() && entity1.isOnline()) {
+                entity = entity1;
+            }
+        }
+
+        return entity;
+    }
 }

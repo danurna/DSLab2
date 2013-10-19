@@ -17,7 +17,6 @@ import java.net.SocketException;
  * User: danielwiturna
  * Date: 19.10.13
  * Time: 22:23
- * To change this template use File | Settings | File Templates.
  */
 public class ProxyServerBridge implements IFileServer, Runnable {
     private final Socket socket;
@@ -72,7 +71,11 @@ public class ProxyServerBridge implements IFileServer, Runnable {
 
     @Override
     public Response info(InfoRequest request) throws IOException {
-        return null;
+        if (server.getFileNames().contains(request.getFilename())) {
+            return server.getFileInfo(request.getFilename());
+        } else {
+            return new MessageResponse("File not found.");
+        }
     }
 
     @Override

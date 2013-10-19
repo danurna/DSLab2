@@ -4,8 +4,10 @@ import message.Request;
 import message.Response;
 import message.request.*;
 import message.response.*;
+import model.DownloadTicket;
 import model.FileserverEntity;
 import model.UserEntity;
+import util.ChecksumUtils;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -75,7 +77,8 @@ public class ClientProxyBridge implements IProxy, Runnable {
 
         for (FileserverEntity entity : myProxy.getFileserverList()) {
             ListResponse listResponse = (ListResponse) performFileserverRequest(new ListRequest(), entity);
-            files.addAll(listResponse.getFileNames());
+            if (listResponse != null)
+                files.addAll(listResponse.getFileNames());
         }
 
         return new ListResponse(files);
@@ -86,8 +89,29 @@ public class ClientProxyBridge implements IProxy, Runnable {
         if (currentUser == null) {
             return null;
         }
-        //TODO: implement fileserver first
-        return null;
+
+        String filename = request.getFilename();
+        FileserverEntity fs = myProxy.getLeastUsedFileserver();
+        if (fs == null) { //no fs available
+            return new MessageResponse("No fileservers available.");
+        }
+
+        Response response = performFileserverRequest(new InfoRequest(filename), fs);
+        if (!(response instanceof InfoResponse)) {
+            return (MessageResponse) response;
+        }
+
+        InfoResponse infoResponse = (InfoResponse) response;
+
+        //Enough credits?
+        if (infoResponse.getSize() <= currentUser.getCredits()) {
+            currentUser.decreaseCredits(infoResponse.getSize());
+            fs.increaseUsage(infoResponse.getSize());
+            String checksum = ChecksumUtils.generateChecksum(currentUser.getUserInfo().toString(), filename, 1, infoResponse.getSize());
+            return new DownloadTicketResponse(new DownloadTicket(currentUser.getName(), request.getFilename(), checksum, fs.getAddress(), fs.getPort()));
+        }
+
+        return new MessageResponse("Not enough credits.");
     }
 
     @Override
@@ -221,5 +245,6 @@ public class ClientProxyBridge implements IProxy, Runnable {
 
         return null;
     }
+
 
 }

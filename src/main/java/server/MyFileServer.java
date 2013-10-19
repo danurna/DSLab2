@@ -1,6 +1,7 @@
 package server;
 
 import cli.Shell;
+import message.response.InfoResponse;
 import util.ComponentFactory;
 import util.Config;
 
@@ -151,5 +152,11 @@ public class MyFileServer {
             System.out.println("File does not exist.");
         }
 
+    }
+
+    public InfoResponse getFileInfo(String filename) {
+        File file = new File(fsDir + "/" + filename);
+
+        return new InfoResponse(filename, file.length());
     }
 }
