@@ -2,18 +2,23 @@ package proxy;
 
 import cli.Command;
 import message.Response;
+import message.response.FileServerInfoResponse;
 import message.response.MessageResponse;
+import message.response.UserInfoResponse;
+import model.FileServerInfo;
 import model.FileserverEntity;
 import model.UserEntity;
+import model.UserInfo;
 
 import java.io.IOException;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Created with IntelliJ IDEA.
  * User: danielwiturna
  * Date: 12.10.13
  * Time: 15:23
- * To change this template use File | Settings | File Templates.
  */
 public class MyProxyCli implements IProxyCli {
     MyProxy realProxy;
@@ -26,21 +31,23 @@ public class MyProxyCli implements IProxyCli {
     @Override
     @Command
     public Response fileservers() throws IOException {
+        List<FileServerInfo> list = new LinkedList<FileServerInfo>();
         for (FileserverEntity fileserver : realProxy.getFileserverList()) {
-            System.out.println(fileserver);
+            list.add(fileserver.getFileServerInfo());
         }
-        //TODO: use real response type (FileServerInfoResponse)
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+
+        return new FileServerInfoResponse(list);
     }
 
     @Override
     @Command
     public Response users() throws IOException {
+        List<UserInfo> list = new LinkedList<UserInfo>();
         for (UserEntity user : realProxy.getUserList()) {
-            System.out.println(user.getUserInfo());
+            list.add(user.getUserInfo());
         }
-        //TODO: use real response type (UserInfoResponse)
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+
+        return new UserInfoResponse(list);
     }
 
     @Override
@@ -48,7 +55,7 @@ public class MyProxyCli implements IProxyCli {
     public MessageResponse exit() throws IOException {
         System.out.println("exit()");
         realProxy.closeConnections();
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        return null;
     }
 
 }
