@@ -1,5 +1,6 @@
 package server;
 
+import cli.Command;
 import message.response.MessageResponse;
 
 import java.io.IOException;
@@ -18,7 +19,14 @@ public class MyFileServerCli implements IFileServerCli {
     }
 
     @Override
+    @Command
     public MessageResponse exit() throws IOException {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        return null;
+    }
+
+    @Command
+    public MessageResponse readFile(String name) throws IOException {
+        server.readFile(name);
+        return null;
     }
 }

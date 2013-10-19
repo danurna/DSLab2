@@ -22,7 +22,7 @@ public class MyClient {
     private Socket socket;
     private ObjectOutputStream out;
     private ObjectInputStream in;
-    private String proxyAdress;
+    private String proxyAddress;
     private int tcpPort;
 
     public MyClient(Config config) {
@@ -53,7 +53,7 @@ public class MyClient {
     private boolean readConfigFile() {
         try {
             tcpPort = config.getInt("proxy.tcp.port");
-            proxyAdress = config.getString("proxy.host");
+            proxyAddress = config.getString("proxy.host");
         } catch (Exception e) {
             return false;
         }
@@ -64,7 +64,7 @@ public class MyClient {
 
     private void createSockets() {
         try {
-            socket = new Socket(proxyAdress, tcpPort);
+            socket = new Socket(proxyAddress, tcpPort);
             out = new ObjectOutputStream(socket.getOutputStream());
             in = new ObjectInputStream(socket.getInputStream());
 

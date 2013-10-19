@@ -1,19 +1,15 @@
 package server;
 
 import cli.Shell;
-import message.Response;
-import message.request.DownloadFileRequest;
-import message.request.InfoRequest;
-import message.request.UploadRequest;
-import message.request.VersionRequest;
-import message.response.MessageResponse;
 import util.ComponentFactory;
 import util.Config;
 
+import java.io.File;
 import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
+import java.net.*;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -25,7 +21,7 @@ import java.util.concurrent.TimeUnit;
  * Date: 19.10.13
  * Time: 13:30
  */
-public class MyFileServer implements IFileServer {
+public class MyFileServer {
     private Config config;
     private ExecutorService executor;
     private int fsAlive;
@@ -77,34 +73,38 @@ public class MyFileServer implements IFileServer {
 
     private void createSockets() {
 
+        Runnable serverCommunicationListen = new Runnable() {
+            @Override
+            public void run() {
+                ServerSocket serverSocket = null;
+                try {
+                    serverSocket = new ServerSocket(tcpPort);
+                } catch (IOException e) {
+                    System.err.println("Could not listen on tcp port: " + tcpPort);
+                    return;
+                }
+
+                while (true) {
+                    try {
+                        Socket clientSocket = serverSocket.accept();
+                        handleConnection(clientSocket);
+                    } catch (IOException e) {
+                        System.err.println("Error on serverSocket accept.");
+                        e.printStackTrace();
+                    }
+                }
+            }
+        };
+
+        executor.execute(serverCommunicationListen);
     }
 
+    private void handleConnection(Socket socket) {
+        System.out.println("handle client for socket " + socket);
 
-    @Override
-    public Response list() throws IOException {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        ProxyServerBridge ProxyServerBridge = new ProxyServerBridge(socket, this);
+        executor.execute(ProxyServerBridge);
     }
-
-    @Override
-    public Response download(DownloadFileRequest request) throws IOException {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    @Override
-    public Response info(InfoRequest request) throws IOException {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    @Override
-    public Response version(VersionRequest request) throws IOException {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    @Override
-    public MessageResponse upload(UploadRequest request) throws IOException {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
-    }
-
 
     public void createSendAliveThread() {
         ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1);
@@ -132,5 +132,24 @@ public class MyFileServer implements IFileServer {
                 0 /* Start delay */,
                 fsAlive /* Period */,
                 TimeUnit.MILLISECONDS);
+    }
+
+    public Set<String> getFileNames() {
+        File file = new File(fsDir);
+        Set<String> files = new HashSet<String>();
+        files.addAll(Arrays.asList(file.list()));
+        return files;
+    }
+
+    public void readFile(String filename) throws IOException {
+        File file = new File(fsDir + "/" + filename);
+        if (file.exists()) {
+            System.out.println(file.getName());
+            System.out.println(file.getCanonicalPath());
+            System.out.println(file.length());
+        } else {
+            System.out.println("File does not exist.");
+        }
+
     }
 }
