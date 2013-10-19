@@ -4,6 +4,7 @@ import cli.Shell;
 import message.request.LoginRequest;
 import model.FileserverEntity;
 import model.UserEntity;
+import util.ComponentFactory;
 import util.Config;
 import util.MyUtils;
 
@@ -27,26 +28,51 @@ public class MyProxy {
     private Config config;
     private ConcurrentHashMap<String, UserEntity> userMap;
     private ConcurrentHashMap<String, FileserverEntity> fileserverMap;
+    //Config values
+    private int tcpPort;
+    private int udpPort;
+    private int fsTimeout;
+    private int fsPeriod;
 
     public static void main(String[] args) {
-        new MyProxy(new Config("proxy")).run();
+        try {
+            new ComponentFactory().startProxy(new Config("proxy"), new Shell("proxy", System.out, System.in));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
-    //Start proxy with system cli for testing
-    private void run() {
-        Shell shell = new Shell("proxyTest", System.out, System.in);
-        shell.register(new MyProxyCli(this));
-        shell.run();
-    }
 
     public MyProxy(Config config) {
         this.config = config;
+        if(!this.readConfigFile()){
+            System.out.println("Proxy: Error on reading config file.");
+            return;
+        }
+
         executor = Executors.newCachedThreadPool();
         userMap = new ConcurrentHashMap<String, UserEntity>();
         fileserverMap = new ConcurrentHashMap<String, FileserverEntity>();
         this.readUserProperties();
         this.createSockets();
         this.createFileserverGC();
+    }
+
+    /**
+     * Reads config values.
+     * @return true, if values are read successfully. False, on resource not found or parse exception.
+     */
+    private boolean readConfigFile(){
+        try{
+            tcpPort = config.getInt("tcp.port");
+            udpPort = config.getInt("udp.port");
+            fsPeriod = config.getInt("fileserver.checkPeriod");
+            fsTimeout = config.getInt("fileserver.timeout");
+        }catch(Exception e){
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -115,7 +141,7 @@ public class MyProxy {
                     long credits = Long.parseLong(prop.getProperty(name + ".credits"));
 
                     UserEntity userEntity = new UserEntity(name, password, credits, false);
-                    System.out.println(userEntity.getUserInfo());
+                    //System.out.println(userEntity.getUserInfo());
                     userMap.put(name, userEntity);
                 }
             }
@@ -133,9 +159,9 @@ public class MyProxy {
             public void run() {
                 ServerSocket serverSocket = null;
                 try {
-                    serverSocket = new ServerSocket(config.getInt("tcp.port"));
+                    serverSocket = new ServerSocket(tcpPort);
                 } catch (IOException e) {
-                    System.err.println("Could not listen on tcp port: " + config.getInt("tcp.port"));
+                    System.err.println("Could not listen on tcp port: " + tcpPort);
                     return;
                 }
 
@@ -156,9 +182,9 @@ public class MyProxy {
             public void run() {
                 DatagramSocket datagramSocket = null;
                 try {
-                    datagramSocket = new DatagramSocket(config.getInt("udp.port"));
+                    datagramSocket = new DatagramSocket(udpPort);
                 } catch (IOException e) {
-                    System.err.println("Could not listen on udp port: " + config.getInt("udp.port"));
+                    System.err.println("Could not listen on udp port: " + udpPort);
                     return;
                 }
 
@@ -191,15 +217,14 @@ public class MyProxy {
                         //value defined in config class. If true, set fileserver entry to offline.
                         for (FileserverEntity entity : fileserverMap.values()) {
                             long difference = MyUtils.compareTwoTimeStamps(MyUtils.getCurrentTimestamp(), entity.getLastAliveTime());
-                            long timeout = Long.parseLong(config.getString("fileserver.timeout"));
-                            if (difference > timeout) {
+                            if (difference > fsTimeout) {
                                 entity.setOnline(false);
                             }
                         }
                     }
                 },
                 0 /* Start delay */,
-                config.getInt("fileserver.checkPeriod") /* Period */,
+                fsPeriod /* Period */,
                 TimeUnit.MILLISECONDS);
     }
 

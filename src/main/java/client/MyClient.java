@@ -21,9 +21,16 @@ public class MyClient {
     private Socket socket;
     private ObjectOutputStream out;
     private ObjectInputStream in;
+    private String proxyAdress;
+    private int tcpPort;
 
     public MyClient(Config config){
         this.config = config;
+        if(!this.readConfigFile()){
+            System.out.println("Client: Error on reading config file.");
+            return;
+        }
+
         this.createSockets();
     }
 
@@ -38,9 +45,25 @@ public class MyClient {
         shell.run();
     }
 
+    /**
+     * Reads config values.
+     * @return true, if values are read successfully. False, on resource not found or parse exception.
+     */
+    private boolean readConfigFile(){
+        try{
+            tcpPort = config.getInt("proxy.tcp.port");
+            proxyAdress = config.getString("proxy.host");
+        }catch(Exception e){
+            return false;
+        }
+
+        return true;
+    }
+
+
     private void createSockets() {
         try{
-            socket = new Socket(config.getString("proxy.host"), config.getInt("proxy.tcp.port"));
+            socket = new Socket(proxyAdress, tcpPort);
             out = new ObjectOutputStream(socket.getOutputStream());
             in = new ObjectInputStream(socket.getInputStream());
 
@@ -72,6 +95,17 @@ public class MyClient {
         }
 
         return null;
+    }
+
+
+    public void closeConnection(){
+        try {
+            out.close();
+            in.close();
+            socket.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 }

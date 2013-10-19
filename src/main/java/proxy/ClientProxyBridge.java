@@ -95,21 +95,23 @@ public class ClientProxyBridge implements IProxy, Runnable {
         if(currentUser == null){
             return null;
         }
-
+        boolean loggedIn = false;
+        //TODO: Should sockets close here or not?
+/*
         boolean loggedIn = true;
 
         try{
-            clientSocket.close();
+             clientSocket.close();
             //On successful close, set loggedIn to false.
             loggedIn = false;
         }catch(IOException e){
             e.printStackTrace();
-        }
+        }*/
 
         //Update user
         currentUser.setOnline(loggedIn);
 
-        return new MessageResponse(loggedIn ? "Logout failed" : "Successful logout!" );
+        return new MessageResponse(loggedIn ? "Logout failed" : "Successfully logged out." );
     }
 
     @Override
