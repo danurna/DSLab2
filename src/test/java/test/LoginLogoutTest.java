@@ -86,4 +86,6 @@ public class LoginLogoutTest {
         assertTrue(String.format("Response must contain '%s' but was '%s'", expected, actual), actual.contains(expected));
 
     }
+
+
 }

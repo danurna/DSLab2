@@ -8,7 +8,7 @@ import util.ComponentFactory;
 import util.Config;
 import util.MyUtils;
 
-import java.io.*;
+import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.ServerSocket;
@@ -36,7 +36,9 @@ public class MyProxy {
 
     public static void main(String[] args) {
         try {
-            new ComponentFactory().startProxy(new Config("proxy"), new Shell("proxy", System.out, System.in));
+            Shell shell = new Shell("proxy", System.out, System.in);
+            new ComponentFactory().startProxy(new Config("proxy"), shell);
+            shell.run();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -45,7 +47,7 @@ public class MyProxy {
 
     public MyProxy(Config config) {
         this.config = config;
-        if(!this.readConfigFile()){
+        if (!this.readConfigFile()) {
             System.out.println("Proxy: Error on reading config file.");
             return;
         }
@@ -60,15 +62,16 @@ public class MyProxy {
 
     /**
      * Reads config values.
+     *
      * @return true, if values are read successfully. False, on resource not found or parse exception.
      */
-    private boolean readConfigFile(){
-        try{
+    private boolean readConfigFile() {
+        try {
             tcpPort = config.getInt("tcp.port");
             udpPort = config.getInt("udp.port");
             fsPeriod = config.getInt("fileserver.checkPeriod");
             fsTimeout = config.getInt("fileserver.timeout");
-        }catch(Exception e){
+        } catch (Exception e) {
             return false;
         }
 
@@ -91,17 +94,18 @@ public class MyProxy {
 
     /**
      * Checks for user and password of given login request
+     *
      * @param request login request
      * @return UserEntitiy of authenticated user. Null, if wrong credentials.
      */
-    public UserEntity login(LoginRequest request){
+    public UserEntity login(LoginRequest request) {
         UserEntity user = userMap.get(request.getUsername());
         //Exists?
-        if(user == null){
+        if (user == null) {
             return null;
         }
         //Right password?
-        if(!user.getPassword().equals(request.getPassword())){
+        if (!user.getPassword().equals(request.getPassword())) {
             return null;
         }
 
@@ -111,7 +115,7 @@ public class MyProxy {
     /**
      * Reads user data from users.properties and stores them in
      * our ConcurrentHashMap userMap.
-     *
+     * <p/>
      * Example data:
      * alice.credits = 200
      * bill.credits = 200
@@ -243,14 +247,13 @@ public class MyProxy {
      */
     public void handleReceivedPacket(DatagramPacket packet) {
         String received = new String(packet.getData(), 0, packet.getLength());
-        System.out.println("Packet received " + received);
         String splitString[] = received.split("\\ ");
 
-        if(splitString.length != 2){
+        if (splitString.length != 2) {
             return;
         }
 
-        if (splitString[0].equals("!isAlive")){
+        if (splitString[0].equals("!isAlive")) {
             String key = splitString[1];
             if (!fileserverMap.containsKey(key)) {
                 fileserverMap.put(key, new FileserverEntity(packet.getAddress(), Integer.parseInt(key), 0, true));
@@ -260,6 +263,9 @@ public class MyProxy {
             }
         }
 
+    }
 
+    public void closeConnections() {
+        //TODO: Close all connections
     }
 }

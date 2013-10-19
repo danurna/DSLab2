@@ -3,6 +3,7 @@ package client;
 import cli.Shell;
 import message.Request;
 import message.Response;
+import util.ComponentFactory;
 import util.Config;
 
 import java.io.IOException;
@@ -24,9 +25,9 @@ public class MyClient {
     private String proxyAdress;
     private int tcpPort;
 
-    public MyClient(Config config){
+    public MyClient(Config config) {
         this.config = config;
-        if(!this.readConfigFile()){
+        if (!this.readConfigFile()) {
             System.out.println("Client: Error on reading config file.");
             return;
         }
@@ -34,26 +35,26 @@ public class MyClient {
         this.createSockets();
     }
 
-    public static void main(String[] args){
-        new MyClient(new Config("client")).run();
-    }
-
-    //Start proxy with system cli for testing
-    private void run() {
-        Shell shell = new Shell("clientTest", System.out, System.in);
-        shell.register(new MyClientCli(this));
-        shell.run();
+    public static void main(String[] args) {
+        try {
+            Shell shell = new Shell("client", System.out, System.in);
+            new ComponentFactory().startClient(new Config("client"), shell);
+            shell.run();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     /**
      * Reads config values.
+     *
      * @return true, if values are read successfully. False, on resource not found or parse exception.
      */
-    private boolean readConfigFile(){
-        try{
+    private boolean readConfigFile() {
+        try {
             tcpPort = config.getInt("proxy.tcp.port");
             proxyAdress = config.getString("proxy.host");
-        }catch(Exception e){
+        } catch (Exception e) {
             return false;
         }
 
@@ -62,35 +63,36 @@ public class MyClient {
 
 
     private void createSockets() {
-        try{
+        try {
             socket = new Socket(proxyAdress, tcpPort);
             out = new ObjectOutputStream(socket.getOutputStream());
             in = new ObjectInputStream(socket.getInputStream());
 
-        }catch(IOException e){
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
     /**
      * Send request and receive response. Blocking.
+     *
      * @param request Request to send.
      * @return Returned response. Null, if not instance of Response.
      */
-    public Response sendRequest(Request request){
+    public Response sendRequest(Request request) {
         try {
             out.writeObject(request);
             out.flush();
 
             Object object = in.readObject();
 
-            if(object instanceof Response){
-                return (Response)object;
+            if (object instanceof Response) {
+                return (Response) object;
             }
 
         } catch (IOException e) {
             e.printStackTrace();
-        } catch (ClassNotFoundException e){
+        } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
 
@@ -98,7 +100,7 @@ public class MyClient {
     }
 
 
-    public void closeConnection(){
+    public void closeConnection() {
         try {
             out.close();
             in.close();
