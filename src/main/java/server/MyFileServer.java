@@ -1,14 +1,18 @@
 package server;
 
 import cli.Shell;
+import message.request.UploadRequest;
 import message.response.InfoResponse;
+import sun.text.normalizer.VersionInfo;
 import util.ComponentFactory;
 import util.Config;
+import util.MyUtils;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.*;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
@@ -30,6 +34,8 @@ public class MyFileServer {
     private int proxyUdpPort;
     private String proxyAdress;
     private String fsDir;
+    //Version hashMap
+    private HashMap<String, VersionInfo> versionMap;
 
     public static void main(String[] args) {
         try {
@@ -48,6 +54,7 @@ public class MyFileServer {
             return;
         }
 
+        versionMap = new HashMap<String, VersionInfo>();
         executor = Executors.newCachedThreadPool();
         this.createSockets();
         this.createSendAliveThread();
@@ -56,7 +63,7 @@ public class MyFileServer {
     /**
      * Reads config values.
      *
-     * @return true, if values are read successfully. False, on resource not found or parse exception.
+     * @return true, if values are convertFileToByteArray successfully. False, on resource not found or parse exception.
      */
     private boolean readConfigFile() {
         try {
@@ -142,14 +149,13 @@ public class MyFileServer {
         return files;
     }
 
-    public void readFile(String filename) throws IOException {
+    public File readFile(String filename) throws IOException {
         File file = new File(fsDir + "/" + filename);
         if (file.exists()) {
-            System.out.println(file.getName());
-            System.out.println(file.getCanonicalPath());
-            System.out.println(file.length());
+            return file;
         } else {
             System.out.println("File does not exist.");
+            return null;
         }
 
     }
@@ -158,5 +164,18 @@ public class MyFileServer {
         File file = new File(fsDir + "/" + filename);
 
         return new InfoResponse(filename, file.length());
+    }
+
+    public boolean saveFileFromRequest(UploadRequest request) throws IOException {
+        String path = fsDir + "/" + request.getFilename();
+        File file = new File(path);
+        if (file.exists()) {
+            //TODO: handle file exists.
+        } else {
+            MyUtils.saveByteArrayAsFile(request.getContent(), path);
+            return true;
+        }
+
+        return false;
     }
 }

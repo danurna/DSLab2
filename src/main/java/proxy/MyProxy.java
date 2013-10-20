@@ -63,7 +63,7 @@ public class MyProxy {
     /**
      * Reads config values.
      *
-     * @return true, if values are read successfully. False, on resource not found or parse exception.
+     * @return true, if values are convertFileToByteArray successfully. False, on resource not found or parse exception.
      */
     private boolean readConfigFile() {
         try {

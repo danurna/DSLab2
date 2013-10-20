@@ -2,13 +2,13 @@ package server;
 
 import message.Response;
 import message.request.*;
+import message.response.DownloadFileResponse;
 import message.response.ListResponse;
 import message.response.MessageResponse;
+import model.DownloadTicket;
+import util.MyUtils;
 
-import java.io.EOFException;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
 import java.net.Socket;
 import java.net.SocketException;
 
@@ -66,7 +66,13 @@ public class ProxyServerBridge implements IFileServer, Runnable {
 
     @Override
     public Response download(DownloadFileRequest request) throws IOException {
-        return null;
+        if (validateTicket(request.getTicket())) {
+            File file = server.readFile(request.getTicket().getFilename());
+            DownloadFileResponse response = new DownloadFileResponse(request.getTicket(), MyUtils.convertFileToByteArray(file));
+            return response;
+        } else {
+            return new MessageResponse("Validation for download ticket failed.");
+        }
     }
 
     @Override
@@ -85,7 +91,8 @@ public class ProxyServerBridge implements IFileServer, Runnable {
 
     @Override
     public MessageResponse upload(UploadRequest request) throws IOException {
-        return null;
+        boolean uploaded = server.saveFileFromRequest(request);
+        return new MessageResponse(uploaded ? "Upload successful." : "Upload failed");
     }
 
     /**
@@ -117,5 +124,14 @@ public class ProxyServerBridge implements IFileServer, Runnable {
         return response;
     }
 
+
+    private boolean validateTicket(DownloadTicket ticket) {
+        try {
+            return util.ChecksumUtils.verifyChecksum(ticket.getUsername(), server.readFile(ticket.getFilename()), 1, ticket.getChecksum());
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 
 }

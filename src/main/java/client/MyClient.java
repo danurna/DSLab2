@@ -6,6 +6,7 @@ import message.Response;
 import util.ComponentFactory;
 import util.Config;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -24,6 +25,7 @@ public class MyClient {
     private ObjectInputStream in;
     private String proxyAddress;
     private int tcpPort;
+    private String clDir;
 
     public MyClient(Config config) {
         this.config = config;
@@ -48,12 +50,13 @@ public class MyClient {
     /**
      * Reads config values.
      *
-     * @return true, if values are read successfully. False, on resource not found or parse exception.
+     * @return true, if values are convertFileToByteArray successfully. False, on resource not found or parse exception.
      */
     private boolean readConfigFile() {
         try {
             tcpPort = config.getInt("proxy.tcp.port");
             proxyAddress = config.getString("proxy.host");
+            clDir = config.getString("download.dir");
         } catch (Exception e) {
             return false;
         }
@@ -108,6 +111,17 @@ public class MyClient {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public File readFile(String filename) throws IOException {
+        File file = new File(clDir + "/" + filename);
+        if (file.exists()) {
+            return file;
+        } else {
+            System.out.println("File does not exist.");
+            return null;
+        }
+
     }
 
 }

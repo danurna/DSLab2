@@ -77,7 +77,7 @@ public class ClientProxyBridge implements IProxy, Runnable {
 
         for (FileserverEntity entity : myProxy.getFileserverList()) {
             ListResponse listResponse = (ListResponse) performFileserverRequest(new ListRequest(), entity);
-            if (listResponse != null)
+            if (listResponse != null) //valid response needed.
                 files.addAll(listResponse.getFileNames());
         }
 
@@ -119,8 +119,18 @@ public class ClientProxyBridge implements IProxy, Runnable {
         if (currentUser == null) {
             return null;
         }
-        //TODO: implement fileserver first
-        return null;
+
+        currentUser.increaseCredits(request.getContent().length * 2);
+
+        for (FileserverEntity entity : myProxy.getFileserverList()) {
+            if (entity.isOnline()) {
+                MessageResponse messageResponse = (MessageResponse) performFileserverRequest(request, entity);
+                System.out.println(messageResponse);
+            }
+
+        }
+
+        return new MessageResponse("Uploaded files.");
     }
 
     @Override
