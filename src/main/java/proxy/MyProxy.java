@@ -8,11 +8,13 @@ import util.ComponentFactory;
 import util.Config;
 import util.MyUtils;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Properties;
 import java.util.concurrent.*;
@@ -25,9 +27,11 @@ import java.util.concurrent.*;
  */
 public class MyProxy {
     private ExecutorService executor;
+    private ScheduledExecutorService scheduledExecutorService;
     private Config config;
     private ConcurrentHashMap<String, UserEntity> userMap;
     private ConcurrentHashMap<String, FileserverEntity> fileserverMap;
+    private Collection<Closeable> activeSockets;
     //Config values
     private int tcpPort;
     private int udpPort;
@@ -53,6 +57,7 @@ public class MyProxy {
         }
 
         executor = Executors.newCachedThreadPool();
+        activeSockets = new ArrayList<Closeable>();
         userMap = new ConcurrentHashMap<String, UserEntity>();
         fileserverMap = new ConcurrentHashMap<String, FileserverEntity>();
         this.readUserProperties();
@@ -145,7 +150,6 @@ public class MyProxy {
                     long credits = Long.parseLong(prop.getProperty(name + ".credits"));
 
                     UserEntity userEntity = new UserEntity(name, password, credits, false);
-                    //System.out.println(userEntity.getUserInfo());
                     userMap.put(name, userEntity);
                 }
             }
@@ -164,20 +168,29 @@ public class MyProxy {
                 ServerSocket serverSocket = null;
                 try {
                     serverSocket = new ServerSocket(tcpPort);
+                    activeSockets.add(serverSocket);
                 } catch (IOException e) {
                     System.err.println("Could not listen on tcp port: " + tcpPort);
                     return;
                 }
 
-                while (true) {
+                while (!Thread.currentThread().isInterrupted()) {
                     try {
                         Socket clientSocket = serverSocket.accept();
+                        activeSockets.add(clientSocket);
                         handleClient(clientSocket);
                     } catch (IOException e) {
                         System.err.println("Error on serverSocket accept.");
-                        e.printStackTrace();
+                    } catch (RejectedExecutionException e) { //From handle client
+                        System.err.println("Rejected Execution");
                     }
                 }
+
+/*                try {
+                    serverSocket.close();
+                } catch (IOException e) {
+                    e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                }*/
             }
         };
 
@@ -187,12 +200,13 @@ public class MyProxy {
                 DatagramSocket datagramSocket = null;
                 try {
                     datagramSocket = new DatagramSocket(udpPort);
+                    activeSockets.add(datagramSocket);
                 } catch (IOException e) {
                     System.err.println("Could not listen on udp port: " + udpPort);
                     return;
                 }
 
-                while (true) {
+                while (!Thread.currentThread().isInterrupted()) {
                     try {
                         byte[] buf = new byte[256];
                         DatagramPacket packet = new DatagramPacket(buf, buf.length);
@@ -200,9 +214,9 @@ public class MyProxy {
                         handleReceivedPacket(packet);
                     } catch (IOException e) {
                         System.err.println("Error on packet receive.");
-                        e.printStackTrace();
                     }
                 }
+
             }
         };
 
@@ -211,7 +225,7 @@ public class MyProxy {
     }
 
     public void createFileserverGC() {
-        ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1);
+        scheduledExecutorService = Executors.newScheduledThreadPool(1);
 
         scheduledExecutorService.scheduleAtFixedRate(
                 new Runnable() {
@@ -267,6 +281,15 @@ public class MyProxy {
 
     public void closeConnections() {
         //TODO: Close all connections
+        executor.shutdownNow();
+        scheduledExecutorService.shutdownNow();
+        for (Closeable c : activeSockets) {
+            try {
+                c.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     public FileserverEntity getLeastUsedFileserver() {

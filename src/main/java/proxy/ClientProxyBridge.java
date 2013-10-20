@@ -107,7 +107,7 @@ public class ClientProxyBridge implements IProxy, Runnable {
         if (infoResponse.getSize() <= currentUser.getCredits()) {
             currentUser.decreaseCredits(infoResponse.getSize());
             fs.increaseUsage(infoResponse.getSize());
-            String checksum = ChecksumUtils.generateChecksum(currentUser.getUserInfo().toString(), filename, 1, infoResponse.getSize());
+            String checksum = ChecksumUtils.generateChecksum(currentUser.getName(), filename, 1, infoResponse.getSize());
             return new DownloadTicketResponse(new DownloadTicket(currentUser.getName(), request.getFilename(), checksum, fs.getAddress(), fs.getPort()));
         }
 
@@ -167,7 +167,7 @@ public class ClientProxyBridge implements IProxy, Runnable {
             objectIn = new ObjectInputStream(clientSocket.getInputStream());
 
             Object obj;
-            while ((obj = objectIn.readObject()) != null) {
+            while ((obj = objectIn.readObject()) != null && !Thread.currentThread().isInterrupted()) {
                 System.out.println("Client sent: " + obj);
                 Response response = performRequest(obj);
 
@@ -186,7 +186,15 @@ public class ClientProxyBridge implements IProxy, Runnable {
             e.printStackTrace();
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
-        }
+        } /*finally {
+            try {
+                objectIn.close();
+                objectOut.close();
+                clientSocket.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }*/
     }
 
     /**

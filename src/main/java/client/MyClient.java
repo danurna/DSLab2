@@ -3,13 +3,18 @@ package client;
 import cli.Shell;
 import message.Request;
 import message.Response;
+import message.request.DownloadFileRequest;
+import message.response.DownloadFileResponse;
+import message.response.DownloadTicketResponse;
 import util.ComponentFactory;
 import util.Config;
+import util.MyUtils;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.InetAddress;
 import java.net.Socket;
 
 /**
@@ -122,6 +127,37 @@ public class MyClient {
             return null;
         }
 
+    }
+
+    public DownloadFileResponse downloadFile(DownloadTicketResponse response) {
+        InetAddress serverAddress = response.getTicket().getAddress();
+        int serverPort = response.getTicket().getPort();
+
+        Request downloadFileRequest = new DownloadFileRequest(response.getTicket());
+
+        try {
+            Socket socket = new Socket(serverAddress, serverPort);
+            ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
+            ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
+
+            out.writeObject(downloadFileRequest);
+            out.flush();
+
+            Object object = in.readObject();
+
+            if (object instanceof DownloadFileResponse) {
+                DownloadFileResponse downloadFileResponse = (DownloadFileResponse) object;
+                MyUtils.saveByteArrayAsFile(downloadFileResponse.getContent(), clDir + "/" + response.getTicket().getFilename());
+                return downloadFileResponse;
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        return null;
     }
 
 }
