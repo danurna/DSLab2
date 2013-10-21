@@ -302,4 +302,22 @@ public class MyProxy {
 
         return entity;
     }
+
+    /**
+     * Checks if username is already in use and logged in.
+     *
+     * @param entity
+     * @return true, if user is already logged in at proxy. Otherwise false.
+     */
+    public boolean isUserLoggedIn(UserEntity entity) {
+        //User exists?
+        if (userMap.contains(entity)) {
+            //User already online?
+            if (userMap.get(entity.getName()).isOnline()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }

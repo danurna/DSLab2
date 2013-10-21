@@ -42,6 +42,10 @@ public class ClientProxyBridge implements IProxy, Runnable {
             return new LoginResponse(LoginResponse.Type.WRONG_CREDENTIALS);
         }
 
+        if (myProxy.isUserLoggedIn(validUser)) {
+            return null;
+        }
+
         //Set currentUser to authenticated user.
         currentUser = validUser;
         currentUser.setOnline(true);
@@ -139,17 +143,6 @@ public class ClientProxyBridge implements IProxy, Runnable {
             return null;
         }
         boolean loggedIn = false;
-        //TODO: Should sockets close here or not?
-/*
-        boolean loggedIn = true;
-
-        try{
-             clientSocket.close();
-            //On successful close, set loggedIn to false.
-            loggedIn = false;
-        }catch(IOException e){
-            e.printStackTrace();
-        }*/
 
         //Update user
         currentUser.setOnline(loggedIn);
@@ -209,6 +202,9 @@ public class ClientProxyBridge implements IProxy, Runnable {
 
         if (obj instanceof LoginRequest) {
             response = login((LoginRequest) obj);
+            if (response == null) {
+                response = new MessageResponse("User already in use.");
+            }
         } else if (obj instanceof BuyRequest) {
             response = buy((BuyRequest) obj);
         } else if (obj instanceof CreditsRequest) {
