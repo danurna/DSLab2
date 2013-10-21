@@ -279,16 +279,12 @@ public class MyProxy {
 
     }
 
-    public void closeConnections() {
-        //TODO: Close all connections
+    public void closeConnections() throws IOException {
         executor.shutdownNow();
         scheduledExecutorService.shutdownNow();
+        System.in.close();
         for (Closeable c : activeSockets) {
-            try {
-                c.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            c.close();
         }
     }
 

@@ -16,6 +16,8 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.util.Timer;
+import java.util.TimerTask;
 
 /**
  * Created with IntelliJ IDEA.
@@ -39,7 +41,23 @@ public class MyClient {
             return;
         }
 
-        this.createSockets();
+        final Timer timer = new Timer();
+
+        //Timer for connection establishing
+        timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                try {
+                    createSockets();
+                    timer.cancel();
+                    System.out.println("Connected to Proxy.");
+                } catch (IOException e) {
+                    System.err.println("Connecting to proxy failed.");
+                }
+
+            }
+        }, 0, 1000);
+
     }
 
     public static void main(String[] args) {
@@ -70,15 +88,10 @@ public class MyClient {
     }
 
 
-    private void createSockets() {
-        try {
-            socket = new Socket(proxyAddress, tcpPort);
-            out = new ObjectOutputStream(socket.getOutputStream());
-            in = new ObjectInputStream(socket.getInputStream());
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    private void createSockets() throws IOException {
+        socket = new Socket(proxyAddress, tcpPort);
+        out = new ObjectOutputStream(socket.getOutputStream());
+        in = new ObjectInputStream(socket.getInputStream());
     }
 
     /**

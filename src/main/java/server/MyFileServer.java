@@ -1,8 +1,10 @@
 package server;
 
 import cli.Shell;
+import message.Response;
 import message.request.UploadRequest;
 import message.response.InfoResponse;
+import message.response.MessageResponse;
 import sun.text.normalizer.VersionInfo;
 import util.ComponentFactory;
 import util.Config;
@@ -149,21 +151,23 @@ public class MyFileServer {
         return files;
     }
 
-    public File readFile(String filename) throws IOException {
+
+    public Response getFileInfo(String filename) {
         File file = new File(fsDir + "/" + filename);
-        if (file.exists()) {
-            return file;
-        } else {
-            System.out.println("File does not exist.");
-            return null;
+        if (file.exists() && file.isFile()) {
+            return new InfoResponse(filename, file.length());
         }
 
+        return new MessageResponse("File does not exist.");
     }
 
-    public InfoResponse getFileInfo(String filename) {
+    public File readFile(String filename) throws IOException {
         File file = new File(fsDir + "/" + filename);
+        if (file.exists() && file.isFile()) {
+            return file;
+        }
 
-        return new InfoResponse(filename, file.length());
+        return null;
     }
 
     public boolean saveFileFromRequest(UploadRequest request) throws IOException {

@@ -42,7 +42,7 @@ public class ProxyServerBridge implements IFileServer, Runnable {
                 Response response = performRequest(obj);
 
                 if (response == null)
-                    return;
+                    response = new MessageResponse("");
 
                 objectOut.writeObject(response);
                 objectOut.flush();
@@ -131,7 +131,6 @@ public class ProxyServerBridge implements IFileServer, Runnable {
         try {
             return util.ChecksumUtils.verifyChecksum(ticket.getUsername(), server.readFile(ticket.getFilename()), 1, ticket.getChecksum());
         } catch (IOException e) {
-            e.printStackTrace();
             return false;
         }
     }
