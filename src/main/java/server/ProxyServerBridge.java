@@ -127,9 +127,15 @@ public class ProxyServerBridge implements IFileServer, Runnable {
     }
 
 
+    /**
+     * Validates ticket with given ticket information and file version number zero.
+     *
+     * @param ticket - Ticket to validate.
+     * @return True, if validation was successful. False, if validation failed.
+     */
     private boolean validateTicket(DownloadTicket ticket) {
         try {
-            return util.ChecksumUtils.verifyChecksum(ticket.getUsername(), server.readFile(ticket.getFilename()), 1, ticket.getChecksum());
+            return util.ChecksumUtils.verifyChecksum(ticket.getUsername(), server.readFile(ticket.getFilename()), 0, ticket.getChecksum());
         } catch (IOException e) {
             return false;
         }

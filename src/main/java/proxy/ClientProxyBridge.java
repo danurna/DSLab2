@@ -114,7 +114,7 @@ public class ClientProxyBridge implements IProxy, Runnable {
         if (infoResponse.getSize() <= currentUser.getCredits()) {
             currentUser.decreaseCredits(infoResponse.getSize());
             fs.increaseUsage(infoResponse.getSize());
-            String checksum = ChecksumUtils.generateChecksum(currentUser.getName(), filename, 1, infoResponse.getSize());
+            String checksum = ChecksumUtils.generateChecksum(currentUser.getName(), filename, 0, infoResponse.getSize());
             return new DownloadTicketResponse(new DownloadTicket(currentUser.getName(), request.getFilename(), checksum, fs.getAddress(), fs.getPort()));
         }
 
@@ -127,8 +127,10 @@ public class ClientProxyBridge implements IProxy, Runnable {
             return null;
         }
 
+        //Increase credits of user for upload.
         currentUser.increaseCredits(request.getContent().length * 2);
 
+        //Upload file to each fileserver online.
         for (FileserverEntity entity : myProxy.getFileserverList()) {
             if (entity.isOnline()) {
                 MessageResponse messageResponse = (MessageResponse) performFileserverRequest(request, entity);

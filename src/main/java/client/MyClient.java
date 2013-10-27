@@ -16,8 +16,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -33,6 +32,7 @@ public class MyClient {
     private String proxyAddress;
     private int tcpPort;
     private String clDir;
+    private HashMap<String, Integer> versionMap;
 
     public MyClient(Config config) {
         this.config = config;
@@ -40,6 +40,9 @@ public class MyClient {
             System.out.println("Client: Error on reading config file.");
             return;
         }
+
+        versionMap = new HashMap<String, Integer>();
+        this.initVersionsMap();
 
         final Timer timer = new Timer();
 
@@ -57,7 +60,6 @@ public class MyClient {
 
             }
         }, 0, 1000);
-
     }
 
     public static void main(String[] args) {
@@ -87,6 +89,31 @@ public class MyClient {
         return true;
     }
 
+    /**
+     * Initialize versions map with Version Zero for each file in directory.
+     */
+    private void initVersionsMap() {
+        Set<String> filenames = getFileNames();
+        for (String filename : filenames) {
+            versionMap.put(filename, 0);
+        }
+    }
+
+    /**
+     * Reads files from directory and put the names into a set of strings.
+     *
+     * @return Set of filenames inside the fs's directory.
+     */
+    public Set<String> getFileNames() {
+        File file = new File(clDir);
+        Set<String> files = new HashSet<String>();
+        files.addAll(Arrays.asList(file.list()));
+        return files;
+    }
+
+    public Integer getVersionForFile(String filename) {
+        return versionMap.get(filename);
+    }
 
     private void createSockets() throws IOException {
         socket = new Socket(proxyAddress, tcpPort);
@@ -119,7 +146,6 @@ public class MyClient {
 
         return null;
     }
-
 
     public void closeConnection() {
         try {
@@ -158,8 +184,12 @@ public class MyClient {
 
             Object object = in.readObject();
 
+            //If right response, save file.
             if (object instanceof DownloadFileResponse) {
                 DownloadFileResponse downloadFileResponse = (DownloadFileResponse) object;
+                //TODO: Get real version of downloaded file. For the moment, use 0. DownloadFileResponse doesn't
+                //      provide enough information.
+                versionMap.put(response.getTicket().getFilename(), 0);
                 MyUtils.saveByteArrayAsFile(downloadFileResponse.getContent(), clDir + "/" + response.getTicket().getFilename());
                 return downloadFileResponse;
             }

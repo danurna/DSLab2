@@ -314,8 +314,14 @@ public class MyProxy {
         return entity;
     }
 
+    /**
+     * Searches for least used, online Fileserver having the file for given filename.
+     *
+     * @param filename - Filename of file, we are searching a fileserver for.
+     * @param bridge   - Bridge to be used to send fileserver request.
+     * @return FileserverRequest with Response and FileserverEntity, if server found. Null, if no fs at all. FileserverRequest w/o FileserverEntity, if file not available.
+     */
     public FileserverRequest getLeastUsedFileserverForFile(String filename, ClientProxyBridge bridge) {
-
         Collection<FileserverEntity> list = fileserverMap.values();
         FileserverEntity fs = getLeastUsedFileserverFromList(list);
 
@@ -342,8 +348,8 @@ public class MyProxy {
     /**
      * Checks if username is already in use and logged in.
      *
-     * @param entity
-     * @return true, if user is already logged in at proxy. Otherwise false.
+     * @param entity - Entitiy of user to check.
+     * @return true, if user is already logged in at proxy. False, otherwise.
      */
     public boolean isUserLoggedIn(UserEntity entity) {
         //User exists?

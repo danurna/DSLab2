@@ -38,7 +38,7 @@ public class MyFileServer {
     //Version hashMap
     private HashMap<String, Integer> versionMap;
 
-    private static int count = 2;
+    private static int count = 1;
 
     public static void main(String[] args) {
         try {
