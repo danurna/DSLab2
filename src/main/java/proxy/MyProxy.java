@@ -1,9 +1,14 @@
 package proxy;
 
 import cli.Shell;
+import message.Response;
+import message.request.InfoRequest;
 import message.request.LoginRequest;
+import message.response.InfoResponse;
+import message.response.MessageResponse;
 import model.FileserverEntity;
 import model.UserEntity;
+import server.FileserverRequest;
 import util.ComponentFactory;
 import util.Config;
 import util.MyUtils;
@@ -288,10 +293,16 @@ public class MyProxy {
         }
     }
 
-    public FileserverEntity getLeastUsedFileserver() {
+    /**
+     * Returns the least used and online fileserver of given list.
+     *
+     * @param list
+     * @return least used and online fileserver of given list.
+     */
+    private FileserverEntity getLeastUsedFileserverFromList(Collection<FileserverEntity> list) {
         FileserverEntity entity = null;
 
-        for (FileserverEntity entity1 : fileserverMap.values()) {
+        for (FileserverEntity entity1 : list) {
             if (entity == null) {
                 if (entity1.isOnline())
                     entity = entity1;
@@ -301,6 +312,31 @@ public class MyProxy {
         }
 
         return entity;
+    }
+
+    public FileserverRequest getLeastUsedFileserverForFile(String filename, ClientProxyBridge bridge) {
+
+        Collection<FileserverEntity> list = fileserverMap.values();
+        FileserverEntity fs = getLeastUsedFileserverFromList(list);
+
+        if (fs == null) { //no fs available
+            return null;
+        }
+
+        Response response;
+        //Call every fs until we found the file (or no fs has it)
+        while (!((response = bridge.performFileserverRequest(new InfoRequest(filename), fs)) instanceof InfoResponse) && list.size() > 0) {
+            list.remove(fs); //Remove fs without requested file.
+            fs = getLeastUsedFileserverFromList(list);
+        }
+
+        //Last response not info response?
+        if (!(response instanceof InfoResponse)) {
+            return new FileserverRequest((MessageResponse) response, null);
+        }
+
+        InfoResponse infoResponse = (InfoResponse) response;
+        return new FileserverRequest(infoResponse, fs);  //To change body of created methods use File | Settings | File Templates.
     }
 
     /**
@@ -320,4 +356,5 @@ public class MyProxy {
 
         return false;
     }
+
 }

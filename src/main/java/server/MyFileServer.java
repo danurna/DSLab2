@@ -5,7 +5,6 @@ import message.Response;
 import message.request.UploadRequest;
 import message.response.InfoResponse;
 import message.response.MessageResponse;
-import sun.text.normalizer.VersionInfo;
 import util.ComponentFactory;
 import util.Config;
 import util.MyUtils;
@@ -37,12 +36,16 @@ public class MyFileServer {
     private String proxyAdress;
     private String fsDir;
     //Version hashMap
-    private HashMap<String, VersionInfo> versionMap;
+    private HashMap<String, Integer> versionMap;
+
+    private static int count = 2;
 
     public static void main(String[] args) {
         try {
-            Shell shell = new Shell("fs1", System.out, System.in);
-            new ComponentFactory().startFileServer(new Config("fs1"), shell);
+            String configName = "fs" + count++;
+            System.out.println(configName);
+            Shell shell = new Shell(configName, System.out, System.in);
+            new ComponentFactory().startFileServer(new Config(configName), shell);
             shell.run();
         } catch (Exception e) {
             e.printStackTrace();
@@ -56,10 +59,11 @@ public class MyFileServer {
             return;
         }
 
-        versionMap = new HashMap<String, VersionInfo>();
+        versionMap = new HashMap<String, Integer>();
         executor = Executors.newCachedThreadPool();
         this.createSockets();
         this.createSendAliveThread();
+        this.initVersionsMap();
     }
 
     /**
@@ -144,6 +148,21 @@ public class MyFileServer {
                 TimeUnit.MILLISECONDS);
     }
 
+    /**
+     * Initialize versions map with Version Zero for each file in directory.
+     */
+    private void initVersionsMap() {
+        Set<String> filenames = getFileNames();
+        for (String filename : filenames) {
+            versionMap.put(filename, 0);
+        }
+    }
+
+    /**
+     * Reads files from directory and put the names into a set of strings.
+     *
+     * @return Set of filenames inside the fs's directory.
+     */
     public Set<String> getFileNames() {
         File file = new File(fsDir);
         Set<String> files = new HashSet<String>();
@@ -151,7 +170,12 @@ public class MyFileServer {
         return files;
     }
 
-
+    /**
+     * Tries to read file inside directory and to create an Inforesponse.
+     *
+     * @param filename - Filename of requestes fileinfo.
+     * @return InfoResponse of file, if exists. Messageresponse, otherwise.
+     */
     public Response getFileInfo(String filename) {
         File file = new File(fsDir + "/" + filename);
         if (file.exists() && file.isFile()) {
@@ -161,6 +185,13 @@ public class MyFileServer {
         return new MessageResponse("File does not exist.");
     }
 
+    /**
+     * Tries to read file from fs's directory.
+     *
+     * @param filename - Filename of file to read from fs's directory.
+     * @return File, if exists. Null, otherwise.
+     * @throws IOException
+     */
     public File readFile(String filename) throws IOException {
         File file = new File(fsDir + "/" + filename);
         if (file.exists() && file.isFile()) {
@@ -170,16 +201,23 @@ public class MyFileServer {
         return null;
     }
 
-    public boolean saveFileFromRequest(UploadRequest request) throws IOException {
+    /**
+     * Tries to save file from request to fs's directory.
+     *
+     * @param request - Request with content to save.
+     * @return True, if file was saved successfully. False, if error occurred while saving.
+     */
+    public boolean saveFileFromRequest(UploadRequest request) {
         String path = fsDir + "/" + request.getFilename();
         File file = new File(path);
-        if (file.exists()) {
-            //TODO: handle file exists.
-        } else {
+        //Save file
+        try {
             MyUtils.saveByteArrayAsFile(request.getContent(), path);
-            return true;
+        } catch (IOException e) {
+            return false;
         }
-
-        return false;
+        //Update versions info
+        versionMap.put(request.getFilename(), request.getVersion());
+        return true;
     }
 }

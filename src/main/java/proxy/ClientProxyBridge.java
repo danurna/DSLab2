@@ -7,6 +7,7 @@ import message.response.*;
 import model.DownloadTicket;
 import model.FileserverEntity;
 import model.UserEntity;
+import server.FileserverRequest;
 import util.ChecksumUtils;
 
 import java.io.EOFException;
@@ -95,17 +96,19 @@ public class ClientProxyBridge implements IProxy, Runnable {
         }
 
         String filename = request.getFilename();
-        FileserverEntity fs = myProxy.getLeastUsedFileserver();
-        if (fs == null) { //no fs available
+        FileserverRequest fileserverRequest = myProxy.getLeastUsedFileserverForFile(filename, this);
+
+        if (fileserverRequest == null) { //no fs available
             return new MessageResponse("No fileservers available.");
         }
 
-        Response response = performFileserverRequest(new InfoRequest(filename), fs);
-        if (!(response instanceof InfoResponse)) {
-            return (MessageResponse) response;
+        if (fileserverRequest.getFileserverEntity() == null) { //no fs with file
+            return fileserverRequest.getResponse();
         }
 
-        InfoResponse infoResponse = (InfoResponse) response;
+        //Use data of fs request.
+        InfoResponse infoResponse = (InfoResponse) fileserverRequest.getResponse();
+        FileserverEntity fs = fileserverRequest.getFileserverEntity();
 
         //Enough credits?
         if (infoResponse.getSize() <= currentUser.getCredits()) {
@@ -226,8 +229,9 @@ public class ClientProxyBridge implements IProxy, Runnable {
         return response;
     }
 
+
     //Establishs connection to fileserver and performs given request.
-    private Response performFileserverRequest(Request request, FileserverEntity entity) {
+    public Response performFileserverRequest(Request request, FileserverEntity entity) {
         ObjectOutputStream objectOut = null;
         ObjectInputStream objectIn = null;
         Object obj = null;
