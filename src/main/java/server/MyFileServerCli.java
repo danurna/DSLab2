@@ -21,13 +21,8 @@ public class MyFileServerCli implements IFileServerCli {
     @Override
     @Command
     public MessageResponse exit() throws IOException {
-        //TODO: implement
-        return null;
+        server.closeConnections();
+        return new MessageResponse("Bye!");
     }
 
-    @Command
-    public MessageResponse readFile(String name) throws IOException {
-        server.readFile(name);
-        return null;
-    }
 }

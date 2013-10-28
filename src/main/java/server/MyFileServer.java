@@ -9,9 +9,12 @@ import util.ComponentFactory;
 import util.Config;
 import util.MyUtils;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.net.*;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
@@ -28,6 +31,8 @@ import java.util.concurrent.TimeUnit;
 public class MyFileServer {
     private Config config;
     private ExecutorService executor;
+    private ScheduledExecutorService scheduledExecutorService;
+    private Collection<Closeable> activeSockets;
     private int fsAlive;
     private int tcpPort;
     private int proxyUdpPort;
@@ -59,6 +64,7 @@ public class MyFileServer {
 
         versionMap = new HashMap<String, Integer>();
         executor = Executors.newCachedThreadPool();
+        activeSockets = new ArrayList<Closeable>();
         this.createSockets();
         this.createSendAliveThread();
         this.initVersionsMap();
@@ -91,18 +97,19 @@ public class MyFileServer {
                 ServerSocket serverSocket = null;
                 try {
                     serverSocket = new ServerSocket(tcpPort);
+                    activeSockets.add(serverSocket);
                 } catch (IOException e) {
                     System.err.println("Could not listen on tcp port: " + tcpPort);
                     return;
                 }
 
-                while (true) {
+                while (!Thread.currentThread().isInterrupted()) {
                     try {
                         Socket clientSocket = serverSocket.accept();
+                        activeSockets.add(clientSocket);
                         handleConnection(clientSocket);
                     } catch (IOException e) {
                         System.err.println("Error on serverSocket accept.");
-                        e.printStackTrace();
                     }
                 }
             }
@@ -119,7 +126,7 @@ public class MyFileServer {
     }
 
     public void createSendAliveThread() {
-        ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1);
+        scheduledExecutorService = Executors.newScheduledThreadPool(1);
 
         scheduledExecutorService.scheduleAtFixedRate(
                 new Runnable() {
@@ -195,7 +202,6 @@ public class MyFileServer {
      */
     public boolean saveFileFromRequest(UploadRequest request) {
         String path = fsDir + "/" + request.getFilename();
-        File file = new File(path);
         //Save file
         try {
             MyUtils.saveByteArrayAsFile(request.getContent(), path);
@@ -205,5 +211,23 @@ public class MyFileServer {
         //Update versions info
         versionMap.put(request.getFilename(), request.getVersion());
         return true;
+    }
+
+    /**
+     * Close threads, sockets and System.in
+     *
+     * @throws IOException
+     */
+    public void closeConnections() throws IOException {
+        executor.shutdownNow();
+        scheduledExecutorService.shutdownNow();
+        System.in.close();
+        for (Closeable c : activeSockets) {
+            c.close();
+        }
+    }
+
+    public Set<String> getFileNames() {
+        return MyUtils.getFileNamesInDirectory(fsDir);
     }
 }
