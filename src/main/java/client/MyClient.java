@@ -16,7 +16,10 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
 
 /**
  * Created with IntelliJ IDEA.
@@ -25,7 +28,6 @@ import java.util.*;
  * Time: 16:02
  */
 public class MyClient {
-    private Config config;
     private Socket socket;
     private ObjectOutputStream out;
     private ObjectInputStream in;
@@ -35,8 +37,7 @@ public class MyClient {
     private HashMap<String, Integer> versionMap;
 
     public MyClient(Config config) {
-        this.config = config;
-        if (!this.readConfigFile()) {
+        if (!this.readConfigFile(config)) {
             System.out.println("Client: Error on reading config file.");
             return;
         }
@@ -77,7 +78,7 @@ public class MyClient {
      *
      * @return true, if values are convertFileToByteArray successfully. False, on resource not found or parse exception.
      */
-    private boolean readConfigFile() {
+    private boolean readConfigFile(Config config) {
         try {
             tcpPort = config.getInt("proxy.tcp.port");
             proxyAddress = config.getString("proxy.host");
@@ -93,23 +94,12 @@ public class MyClient {
      * Initialize versions map with Version Zero for each file in directory.
      */
     private void initVersionsMap() {
-        Set<String> filenames = getFileNames();
+        Set<String> filenames = MyUtils.getFileNamesInDirectory(clDir);
         for (String filename : filenames) {
             versionMap.put(filename, 0);
         }
     }
 
-    /**
-     * Reads files from directory and put the names into a set of strings.
-     *
-     * @return Set of filenames inside the fs's directory.
-     */
-    public Set<String> getFileNames() {
-        File file = new File(clDir);
-        Set<String> files = new HashSet<String>();
-        files.addAll(Arrays.asList(file.list()));
-        return files;
-    }
 
     public Integer getVersionForFile(String filename) {
         return versionMap.get(filename);

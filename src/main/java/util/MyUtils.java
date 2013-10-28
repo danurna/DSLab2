@@ -5,6 +5,9 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.sql.Timestamp;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Created with IntelliJ IDEA.
@@ -72,5 +75,18 @@ public class MyUtils {
         } finally {
             outputStream.close();
         }
+    }
+
+
+    /**
+     * Reads files from directory and put the names into a set of strings.
+     *
+     * @return Set of filenames inside the fs's directory.
+     */
+    public static Set<String> getFileNamesInDirectory(String dir) {
+        File file = new File(dir);
+        Set<String> files = new HashSet<String>();
+        files.addAll(Arrays.asList(file.list()));
+        return files;
     }
 }

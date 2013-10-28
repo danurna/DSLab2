@@ -251,6 +251,11 @@ public class MyProxy {
                 TimeUnit.MILLISECONDS);
     }
 
+    /**
+     * Create new Session for one accepted client socket.
+     *
+     * @param clientSocket
+     */
     public void handleClient(final Socket clientSocket) {
         System.out.println("handle client for socket " + clientSocket);
 
@@ -265,7 +270,7 @@ public class MyProxy {
      * @param packet Received UDP packet to handle.
      */
     public void handleReceivedPacket(DatagramPacket packet) {
-        String received = new String(packet.getData(), 0, packet.getLength());
+        String received = new String(packet.getData());
         String splitString[] = received.split("\\ ");
 
         if (splitString.length != 2) {
@@ -284,6 +289,11 @@ public class MyProxy {
 
     }
 
+    /**
+     * Close threads, sockets and System.in
+     *
+     * @throws IOException
+     */
     public void closeConnections() throws IOException {
         executor.shutdownNow();
         scheduledExecutorService.shutdownNow();

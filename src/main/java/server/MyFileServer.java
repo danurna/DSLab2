@@ -12,9 +12,7 @@ import util.MyUtils;
 import java.io.File;
 import java.io.IOException;
 import java.net.*;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -152,22 +150,10 @@ public class MyFileServer {
      * Initialize versions map with Version Zero for each file in directory.
      */
     private void initVersionsMap() {
-        Set<String> filenames = getFileNames();
+        Set<String> filenames = MyUtils.getFileNamesInDirectory(fsDir);
         for (String filename : filenames) {
             versionMap.put(filename, 0);
         }
-    }
-
-    /**
-     * Reads files from directory and put the names into a set of strings.
-     *
-     * @return Set of filenames inside the fs's directory.
-     */
-    public Set<String> getFileNames() {
-        File file = new File(fsDir);
-        Set<String> files = new HashSet<String>();
-        files.addAll(Arrays.asList(file.list()));
-        return files;
     }
 
     /**
