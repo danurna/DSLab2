@@ -270,7 +270,7 @@ public class MyProxy {
      * @param packet Received UDP packet to handle.
      */
     public void handleReceivedPacket(DatagramPacket packet) {
-        String received = new String(packet.getData());
+        String received = new String(packet.getData(), 0, packet.getLength());
         String splitString[] = received.split("\\ ");
 
         if (splitString.length != 2) {
