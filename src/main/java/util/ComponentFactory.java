@@ -11,14 +11,10 @@ import server.IFileServerCli;
 import server.MyFileServer;
 import server.MyFileServerCli;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
 /**
  * Provides methods for starting an arbitrary amount of various components.
  */
 public class ComponentFactory {
-    private final ExecutorService executorService = Executors.newCachedThreadPool();
 
     /**
      * Creates and starts a new client instance using the provided {@link Config} and {@link Shell}.
@@ -32,7 +28,22 @@ public class ComponentFactory {
         System.out.println("startClient");
         IClientCli clientCli = new MyClientCli(new MyClient(config));
         shell.register(clientCli);
-        executorService.execute(shell);
+        final Shell currentShell = shell;
+        Thread thread = new Thread(new Runnable() {
+
+            @Override
+            public void run() {
+                try {
+                    currentShell.run();
+                } catch (IllegalArgumentException e) {
+                    System.out.println("USAGE!");
+                }
+
+            }
+        });
+        thread.start();
+
+
         return clientCli;
     }
 
@@ -48,7 +59,10 @@ public class ComponentFactory {
         System.out.println("startProxy");
         IProxyCli proxyCli = new MyProxyCli(new MyProxy(config));
         shell.register(proxyCli);
-        executorService.execute(shell);
+        new ShellThreader(shell).start();
+        // Thread thread = new Thread(shell);
+        // thread.start();
+
         return proxyCli;
     }
 
@@ -64,7 +78,9 @@ public class ComponentFactory {
         System.out.println("startFileServer");
         IFileServerCli fileServerCli = new MyFileServerCli(new MyFileServer(config));
         shell.register(fileServerCli);
-        executorService.execute(shell);
+        Thread thread = new Thread(shell);
+        thread.start();
+
         return fileServerCli;
     }
 }

@@ -44,7 +44,10 @@ public class MyClient {
 
         versionMap = new HashMap<String, Integer>();
         this.initVersionsMap();
+        this.connectToProxy();
+    }
 
+    private void connectToProxy() {
         final Timer timer = new Timer();
 
         //Timer for connection establishing
@@ -56,11 +59,11 @@ public class MyClient {
                     timer.cancel();
                     System.out.println("Connected to Proxy.");
                 } catch (IOException e) {
-                    System.err.println("Connecting to proxy failed.");
+                    System.out.println("Connecting to proxy failed. Automatically trying in 3 seconds again.");
                 }
 
             }
-        }, 0, 1000);
+        }, 0, 3000);
     }
 
     public static void main(String[] args) {
@@ -84,6 +87,7 @@ public class MyClient {
             proxyAddress = config.getString("proxy.host");
             clDir = config.getString("download.dir");
         } catch (Exception e) {
+            //TODO: print usage!
             return false;
         }
 
@@ -129,7 +133,9 @@ public class MyClient {
             }
 
         } catch (IOException e) {
-            e.printStackTrace();
+            System.err.println("Error on client sendRequest. Closing connection.");
+            this.closeConnection();
+            this.connectToProxy();
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
@@ -144,6 +150,7 @@ public class MyClient {
             socket.close();
         } catch (IOException e) {
             e.printStackTrace();
+            //TODO
         }
     }
 

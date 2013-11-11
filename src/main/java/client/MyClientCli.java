@@ -30,18 +30,16 @@ public class MyClientCli implements IClientCli {
     @Command
     public LoginResponse login(String username, String password) throws IOException {
         if (loggedIn) {
-            System.err.println("Already logged in.");
+            System.out.println("Already logged in.");
             return null;
-            //throw new IOException("Already logged in.");
         }
 
         Response response = client.sendRequest(new LoginRequest(username, password));
 
         //Could be message response if user is already logged in with other client
         if (!(response instanceof LoginResponse)) {
-            System.err.println(response.toString());
+            System.out.println(response.toString());
             return null;
-            //throw new IOException(response.toString());
         }
 
         LoginResponse loginResponse = (LoginResponse) response;
@@ -103,7 +101,7 @@ public class MyClientCli implements IClientCli {
     @Command
     public MessageResponse logout() throws IOException {
         MessageResponse response = (MessageResponse) client.sendRequest(new LogoutRequest());
-        if (response.toString().equals("Successfully logged out."))
+        if (response != null && response.toString().equals("Successfully logged out."))
             loggedIn = false;
 
         return response;

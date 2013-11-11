@@ -253,13 +253,11 @@ public class ClientProxyBridge implements IProxy, Runnable {
             System.out.println("Reached EOF");
         } catch (SocketException e) {
             System.out.println("Socket closed!");
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (ClassNotFoundException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
-        if (obj instanceof Response) {
+        if (obj != null && obj instanceof Response) {
             return (Response) obj;
         }
 

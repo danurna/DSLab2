@@ -59,14 +59,13 @@ public class ApiTest {
             List<String> lines = readLines(url.openStream(), Charset.defaultCharset());
             System.out.println(fileName);
             for (String line : lines) {
-                System.out.println(line);
                 /*
-				 * Comment
+                 * Comment
 				 */
                 if (line == null || line.isEmpty() || line.startsWith("#")) {
                     // Intentionally do nothing
                 }
-				/*
+                /*
 				 * Shell
 				 */
                 else if (line.startsWith("*")) {
@@ -91,6 +90,8 @@ public class ApiTest {
                     CliComponent cliComponent = new CliComponent(component, shell, out, in);
                     componentMap.put(terminal, cliComponent);
                     Thread.sleep(Util.WAIT_FOR_COMPONENT_STARTUP);
+                } else if (line.startsWith("%")) {
+                    System.out.println(line);
                 }
 				/*
 				 * CLI

@@ -52,9 +52,7 @@ public class ProxyServerBridge implements IFileServer, Runnable {
             System.out.println("Reached EOF");
         } catch (SocketException e) {
             System.out.println("Socket closed!");
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (ClassNotFoundException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }

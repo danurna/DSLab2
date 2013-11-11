@@ -47,7 +47,7 @@ public class MyProxy {
         try {
             Shell shell = new Shell("proxy", System.out, System.in);
             new ComponentFactory().startProxy(new Config("proxy"), shell);
-            shell.run();
+//            shell.run();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -185,9 +185,11 @@ public class MyProxy {
                         activeSockets.add(clientSocket);
                         handleClient(clientSocket);
                     } catch (IOException e) {
-                        System.err.println("Error on serverSocket accept.");
+                        e.printStackTrace();
+                        //System.out.println("Error on serverSocket accept.");
                     } catch (RejectedExecutionException e) { //From handle client
-                        System.err.println("Rejected Execution");
+                        e.printStackTrace();
+                        //System.err.println("Rejected Execution");
                     }
                 }
 
@@ -218,7 +220,8 @@ public class MyProxy {
                         datagramSocket.receive(packet);
                         handleReceivedPacket(packet);
                     } catch (IOException e) {
-                        System.err.println("Error on packet receive.");
+                        e.printStackTrace();
+                        //System.out.println("Error on packet receive.");
                     }
                 }
 
@@ -339,20 +342,20 @@ public class MyProxy {
             return null;
         }
 
-        Response response;
+        Response response = null;
         //Call every fs until we found the file (or no fs has it)
-        while (!((response = bridge.performFileserverRequest(new InfoRequest(filename), fs)) instanceof InfoResponse) && list.size() > 0) {
+        while (list.size() > 0 && !((response = bridge.performFileserverRequest(new InfoRequest(filename), fs)) instanceof InfoResponse)) {
             list.remove(fs); //Remove fs without requested file.
             fs = getLeastUsedFileserverFromList(list);
         }
 
         //Last response not info response?
-        if (!(response instanceof InfoResponse)) {
+        if (response != null && !(response instanceof InfoResponse)) {
             return new FileserverRequest((MessageResponse) response, null);
         }
 
         InfoResponse infoResponse = (InfoResponse) response;
-        return new FileserverRequest(infoResponse, fs);  //To change body of created methods use File | Settings | File Templates.
+        return new FileserverRequest(infoResponse, fs);
     }
 
     /**
