@@ -1,11 +1,9 @@
 package server;
 
-import cli.Shell;
 import message.Response;
 import message.request.UploadRequest;
 import message.response.InfoResponse;
 import message.response.MessageResponse;
-import util.ComponentFactory;
 import util.Config;
 import util.MyUtils;
 
@@ -40,20 +38,6 @@ public class MyFileServer {
     private String fsDir;
     //Version hashMap
     private HashMap<String, Integer> versionMap;
-
-    private static int count = 1;
-
-    public static void main(String[] args) {
-        try {
-            String configName = "fs" + count++;
-            System.out.println(configName);
-            Shell shell = new Shell(configName, System.out, System.in);
-            new ComponentFactory().startFileServer(new Config(configName), shell);
-            shell.run();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
 
     public MyFileServer(Config config) {
         this.config = config;
@@ -130,6 +114,8 @@ public class MyFileServer {
 
         scheduledExecutorService.scheduleAtFixedRate(
                 new Runnable() {
+                    DatagramSocket toSocket;
+
                     @Override
                     public void run() {
 
@@ -138,7 +124,8 @@ public class MyFileServer {
                             address = InetAddress.getByName(proxyAdress);
                             String s = "!isAlive " + tcpPort;
                             byte[] buf = s.getBytes();
-                            DatagramSocket toSocket = new DatagramSocket();
+                            if (toSocket == null)
+                                toSocket = new DatagramSocket();
                             DatagramPacket packet = new DatagramPacket(buf, buf.length, address, proxyUdpPort);
                             toSocket.send(packet);
                         } catch (Exception e) {
