@@ -149,8 +149,8 @@ public class MyClient {
             in.close();
             socket.close();
         } catch (IOException e) {
-            e.printStackTrace();
-            //TODO
+            //Exceptions can occur here after losing connection
+            //nothing to worry about.
         }
     }
 

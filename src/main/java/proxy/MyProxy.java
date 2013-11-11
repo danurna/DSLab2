@@ -185,19 +185,13 @@ public class MyProxy {
                         activeSockets.add(clientSocket);
                         handleClient(clientSocket);
                     } catch (IOException e) {
-                        e.printStackTrace();
-                        //System.out.println("Error on serverSocket accept.");
+                        System.out.println("Proxy: Error on serverSocket accept. Socket closed?");
                     } catch (RejectedExecutionException e) { //From handle client
                         e.printStackTrace();
                         //System.err.println("Rejected Execution");
                     }
                 }
 
-/*                try {
-                    serverSocket.close();
-                } catch (IOException e) {
-                    e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-                }*/
             }
         };
 
@@ -220,8 +214,7 @@ public class MyProxy {
                         datagramSocket.receive(packet);
                         handleReceivedPacket(packet);
                     } catch (IOException e) {
-                        e.printStackTrace();
-                        //System.out.println("Error on packet receive.");
+                        System.out.println("Proxy: Error on packetReceive accept. Socket closed?");
                     }
                 }
 

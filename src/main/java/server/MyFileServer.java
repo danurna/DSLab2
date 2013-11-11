@@ -93,8 +93,7 @@ public class MyFileServer {
                         activeSockets.add(clientSocket);
                         handleConnection(clientSocket);
                     } catch (IOException e) {
-                        e.printStackTrace();
-                        //System.err.println("Error on serverSocket accept.");
+                        System.out.println("FS: Error on serverSocket accept. Socket closed?");
                     }
                 }
             }
