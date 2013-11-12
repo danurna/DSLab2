@@ -42,7 +42,6 @@ public class MyFileServer {
     public MyFileServer(Config config) {
         this.config = config;
         if (!this.readConfigFile()) {
-            System.out.println("Fileserver: Error on reading config file.");
             return;
         }
 
@@ -67,6 +66,9 @@ public class MyFileServer {
             proxyAdress = config.getString("proxy.host");
             fsDir = config.getString("fileserver.dir");
         } catch (Exception e) {
+            System.err.println("Something went wrong on reading Fileserver properties.\n" +
+                    "Please provide information like this:\nKey=YourRealValue \ntcp.port=12345\n" +
+                    "proxy.udp.port=12345\nfileserver.alive=1000\nproxy.host=localhost\nfileserver.dir=files/server");
             return false;
         }
 

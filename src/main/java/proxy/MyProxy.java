@@ -47,7 +47,6 @@ public class MyProxy {
         try {
             Shell shell = new Shell("proxy", System.out, System.in);
             new ComponentFactory().startProxy(new Config("proxy"), shell);
-//            shell.run();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -57,7 +56,6 @@ public class MyProxy {
     public MyProxy(Config config) {
         this.config = config;
         if (!this.readConfigFile()) {
-            System.out.println("Proxy: Error on reading config file.");
             return;
         }
 
@@ -82,6 +80,9 @@ public class MyProxy {
             fsPeriod = config.getInt("fileserver.checkPeriod");
             fsTimeout = config.getInt("fileserver.timeout");
         } catch (Exception e) {
+            System.err.println("Something went wrong on reading Proxy properties.\n" +
+                    "Please provide information like this:\nKey=YourRealValue \ntcp.port=12345\n" +
+                    "udp.port=12345\nfileserver.checkPeriod=2000\nfileserver.timout=4000");
             return false;
         }
 

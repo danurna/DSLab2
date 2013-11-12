@@ -38,7 +38,6 @@ public class MyClient {
 
     public MyClient(Config config) {
         if (!this.readConfigFile(config)) {
-            System.out.println("Client: Error on reading config file.");
             return;
         }
 
@@ -87,7 +86,9 @@ public class MyClient {
             proxyAddress = config.getString("proxy.host");
             clDir = config.getString("download.dir");
         } catch (Exception e) {
-            //TODO: print usage!
+            System.err.println("Something went wrong on reading Client properties.\n" +
+                    "Please provide information like this:\nKey=YourRealValue \nproxy.tcp.port=12345\n" +
+                    "proxy.host=localhost\ndownload.dir=files/client");
             return false;
         }
 
