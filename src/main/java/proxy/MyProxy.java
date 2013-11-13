@@ -36,7 +36,7 @@ public class MyProxy {
     private Config config;
     private ConcurrentHashMap<String, UserEntity> userMap;
     private ConcurrentHashMap<String, FileserverEntity> fileserverMap;
-    private Collection<Closeable> activeSockets;
+    private Collection<Object> activeSockets;
     //Config values
     private int tcpPort;
     private int udpPort;
@@ -60,7 +60,7 @@ public class MyProxy {
         }
 
         executor = Executors.newCachedThreadPool();
-        activeSockets = new ArrayList<Closeable>();
+        activeSockets = new ArrayList<Object>();
         userMap = new ConcurrentHashMap<String, UserEntity>();
         fileserverMap = new ConcurrentHashMap<String, FileserverEntity>();
         this.readUserProperties();
@@ -295,7 +295,8 @@ public class MyProxy {
         executor.shutdownNow();
         scheduledExecutorService.shutdownNow();
         System.in.close();
-        for (Closeable c : activeSockets) {
+        for (Object o : activeSockets) {
+            Closeable c = (Closeable) o;
             c.close();
         }
     }

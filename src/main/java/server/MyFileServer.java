@@ -30,7 +30,7 @@ public class MyFileServer {
     private Config config;
     private ExecutorService executor;
     private ScheduledExecutorService scheduledExecutorService;
-    private Collection<Closeable> activeSockets;
+    private Collection<Object> activeSockets;
     private int fsAlive;
     private int tcpPort;
     private int proxyUdpPort;
@@ -47,7 +47,7 @@ public class MyFileServer {
 
         versionMap = new HashMap<String, Integer>();
         executor = Executors.newCachedThreadPool();
-        activeSockets = new ArrayList<Closeable>();
+        activeSockets = new ArrayList<Object>();
         this.createSockets();
         this.createSendAliveThread();
         this.initVersionsMap();
@@ -211,7 +211,8 @@ public class MyFileServer {
         executor.shutdownNow();
         scheduledExecutorService.shutdownNow();
         System.in.close();
-        for (Closeable c : activeSockets) {
+        for (Object o : activeSockets) {
+            Closeable c = (Closeable) o;
             c.close();
         }
     }
