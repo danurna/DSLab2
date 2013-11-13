@@ -112,6 +112,7 @@ public class MyClientCli implements IClientCli {
     public MessageResponse exit() throws IOException {
         logout();
         client.closeConnection();
+        client.stopTimer();
         System.in.close();
         return new MessageResponse("Bye!");
     }

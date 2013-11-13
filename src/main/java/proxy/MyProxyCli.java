@@ -53,7 +53,6 @@ public class MyProxyCli implements IProxyCli {
     @Override
     @Command
     public MessageResponse exit() throws IOException {
-        System.out.println("exit()");
         realProxy.closeConnections();
         return null;
     }

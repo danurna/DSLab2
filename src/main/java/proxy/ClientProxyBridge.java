@@ -81,9 +81,14 @@ public class ClientProxyBridge implements IProxy, Runnable {
         Set<String> files = new HashSet<String>();
 
         for (FileserverEntity entity : myProxy.getFileserverList()) {
-            ListResponse listResponse = (ListResponse) performFileserverRequest(new ListRequest(), entity);
-            if (listResponse != null) //valid response needed.
-                files.addAll(listResponse.getFileNames());
+            try {
+                ListResponse listResponse = (ListResponse) performFileserverRequest(new ListRequest(), entity);
+                if (listResponse != null) //valid response needed.
+                    files.addAll(listResponse.getFileNames());
+            } catch (IOException e) {
+                System.out.println("Connection to fileserver not successful!");
+            }
+
         }
 
         return new ListResponse(files);
@@ -127,18 +132,28 @@ public class ClientProxyBridge implements IProxy, Runnable {
             return null;
         }
 
-        //Increase credits of user for upload.
-        currentUser.increaseCredits(request.getContent().length * 2);
-
+        boolean didUploadAtLeastOnce = false;
         //Upload file to each fileserver online.
         for (FileserverEntity entity : myProxy.getFileserverList()) {
             if (entity.isOnline()) {
-                MessageResponse messageResponse = (MessageResponse) performFileserverRequest(request, entity);
-                System.out.println(messageResponse);
+                try {
+                    MessageResponse messageResponse = (MessageResponse) performFileserverRequest(request, entity);
+                    System.out.println(messageResponse);
+                    didUploadAtLeastOnce = true;
+                } catch (SocketException e) {
+                    System.out.println("Connection to fileserver not successful!");
+                }
+
             }
 
         }
 
+        if (!didUploadAtLeastOnce) {
+            return new MessageResponse("Uploading failed because there is no fileserver available. Please try it again later.");
+        }
+
+        //Increase credits of user for upload.
+        currentUser.increaseCredits(request.getContent().length * 2);
         return new MessageResponse("Uploaded files.");
     }
 
@@ -166,7 +181,6 @@ public class ClientProxyBridge implements IProxy, Runnable {
 
             Object obj;
             while ((obj = objectIn.readObject()) != null && !Thread.currentThread().isInterrupted()) {
-                System.out.println("Client sent: " + obj);
                 Response response = performRequest(obj);
 
                 if (response == null)
@@ -179,7 +193,7 @@ public class ClientProxyBridge implements IProxy, Runnable {
         } catch (EOFException e) {
             System.out.println("Reached EOF");
         } catch (SocketException e) {
-            System.out.println("Socket closed!");
+            System.out.println("Socket to client closed!");
         } catch (IOException e) {
             e.printStackTrace();
         } catch (ClassNotFoundException e) {
@@ -232,8 +246,20 @@ public class ClientProxyBridge implements IProxy, Runnable {
     }
 
 
+    //Handles Socket exception from private method and provides functionality to external classes.
+    public Response performFileserverRequestWrapper(Request request, FileserverEntity entity) {
+        Response response = null;
+        try {
+            response = this.performFileserverRequest(request, entity);
+        } catch (IOException e) {
+            System.out.println("Connection to fileserver not successful.");
+        }
+
+        return response;
+    }
+
     //Establishs connection to fileserver and performs given request.
-    public Response performFileserverRequest(Request request, FileserverEntity entity) {
+    private Response performFileserverRequest(Request request, FileserverEntity entity) throws IOException {
         ObjectOutputStream objectOut = null;
         ObjectInputStream objectIn = null;
         Object obj = null;
@@ -251,9 +277,8 @@ public class ClientProxyBridge implements IProxy, Runnable {
             socket.close();
         } catch (EOFException e) {
             System.out.println("Reached EOF");
-        } catch (SocketException e) {
-            System.out.println("Socket closed!");
-        } catch (Exception e) {
+        } catch (ClassNotFoundException e) {
+            //Shouldn't occur.
             e.printStackTrace();
         }
 

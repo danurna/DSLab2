@@ -38,7 +38,6 @@ public class ProxyServerBridge implements IFileServer, Runnable {
 
             Object obj;
             while ((obj = objectIn.readObject()) != null) {
-                System.out.println("Server received: " + obj);
                 Response response = performRequest(obj);
 
                 if (response == null)
@@ -46,6 +45,7 @@ public class ProxyServerBridge implements IFileServer, Runnable {
 
                 objectOut.writeObject(response);
                 objectOut.flush();
+                break;
             }
 
         } catch (EOFException e) {

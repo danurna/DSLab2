@@ -35,6 +35,7 @@ public class MyClient {
     private int tcpPort;
     private String clDir;
     private HashMap<String, Integer> versionMap;
+    private boolean exit = false;
 
     public MyClient(Config config) {
         if (!this.readConfigFile(config)) {
@@ -53,6 +54,9 @@ public class MyClient {
         timer.schedule(new TimerTask() {
             @Override
             public void run() {
+                if (exit)
+                    timer.cancel();
+
                 try {
                     createSockets();
                     timer.cancel();
@@ -134,7 +138,7 @@ public class MyClient {
             }
 
         } catch (IOException e) {
-            System.err.println("Error on client sendRequest. Closing connection.");
+            System.out.println("Error on client sendRequest. Closing connection.");
             this.closeConnection();
             this.connectToProxy();
         } catch (ClassNotFoundException e) {
@@ -153,6 +157,10 @@ public class MyClient {
             //Exceptions can occur here after losing connection
             //nothing to worry about.
         }
+    }
+
+    public void stopTimer() {
+        exit = true;
     }
 
     public File readFile(String filename) throws IOException {

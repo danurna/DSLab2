@@ -254,7 +254,7 @@ public class MyProxy {
      * @param clientSocket
      */
     public void handleClient(final Socket clientSocket) {
-        System.out.println("handle client for socket " + clientSocket);
+        System.out.println("New ClientProxyBridge for socket " + clientSocket);
 
         ClientProxyBridge clientProxyBridge = new ClientProxyBridge(clientSocket, this);
         executor.execute(clientProxyBridge);
@@ -337,16 +337,23 @@ public class MyProxy {
         }
 
         Response response = null;
+
         //Call every fs until we found the file (or no fs has it)
-        while (list.size() > 0 && !((response = bridge.performFileserverRequest(new InfoRequest(filename), fs)) instanceof InfoResponse)) {
+        while (list.size() > 0 && !((response = bridge.performFileserverRequestWrapper(new InfoRequest(filename), fs)) instanceof InfoResponse)) {
             list.remove(fs); //Remove fs without requested file.
             fs = getLeastUsedFileserverFromList(list);
+        }
+
+        //Can be null here again, if a fileserver went offline in meantime.
+        if (fs == null) { //no fs available
+            return null;
         }
 
         //Last response not info response?
         if (response != null && !(response instanceof InfoResponse)) {
             return new FileserverRequest((MessageResponse) response, null);
         }
+
 
         InfoResponse infoResponse = (InfoResponse) response;
         return new FileserverRequest(infoResponse, fs);

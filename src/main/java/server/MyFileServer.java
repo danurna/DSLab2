@@ -105,7 +105,7 @@ public class MyFileServer {
     }
 
     private void handleConnection(Socket socket) {
-        System.out.println("handle client for socket " + socket);
+        System.out.println("Server handle connection for socket " + socket);
 
         ProxyServerBridge ProxyServerBridge = new ProxyServerBridge(socket, this);
         executor.execute(ProxyServerBridge);
