@@ -71,6 +71,12 @@ public class MyFileServer {
             return false;
         }
 
+        File dir = new File(fsDir);
+        if (dir == null || !dir.isDirectory()) {
+            System.err.println("Directory path given in properties file has to contain a directory!");
+            return false;
+        }
+
         return true;
     }
 

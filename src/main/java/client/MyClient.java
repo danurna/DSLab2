@@ -82,6 +82,12 @@ public class MyClient {
             return false;
         }
 
+        File dir = new File(clDir);
+        if (dir == null || !dir.isDirectory()) {
+            System.err.println("Directory path given in properties file has to contain a directory!");
+            return false;
+        }
+
         return true;
     }
 
