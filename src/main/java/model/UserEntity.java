@@ -1,19 +1,15 @@
 package model;
 
 /**
- * Created with IntelliJ IDEA.
- * User: danielwiturna
- * Date: 13.10.13
- * Time: 17:14
- * To change this template use File | Settings | File Templates.
+ * Extended User model because UserInfo doesn't cover the demands.
  */
-public class UserEntity{
+public class UserEntity {
     private String name;
     private long credits;
     private volatile boolean online;
     private String password;
 
-    public UserEntity(String name, String password, long credits, boolean online){
+    public UserEntity(String name, String password, long credits, boolean online) {
         this.name = name;
         this.credits = credits;
         this.online = online;
@@ -24,7 +20,7 @@ public class UserEntity{
         this.password = password;
     }
 
-    public String getPassword(){
+    public String getPassword() {
         return this.password;
     }
 
@@ -40,11 +36,11 @@ public class UserEntity{
         return credits;
     }
 
-    public synchronized void increaseCredits(long increase){
+    public synchronized void increaseCredits(long increase) {
         this.credits += increase;
     }
 
-    public synchronized void decreaseCredits(long decrease){
+    public synchronized void decreaseCredits(long decrease) {
         this.credits -= decrease;
     }
 
@@ -56,7 +52,7 @@ public class UserEntity{
         this.name = name;
     }
 
-    public UserInfo getUserInfo(){
+    public UserInfo getUserInfo() {
         return new UserInfo(name, credits, online);
     }
 

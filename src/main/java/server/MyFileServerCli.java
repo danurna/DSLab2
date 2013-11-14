@@ -6,10 +6,8 @@ import message.response.MessageResponse;
 import java.io.IOException;
 
 /**
- * Created with IntelliJ IDEA.
- * User: danielwiturna
- * Date: 19.10.13
- * Time: 13:31
+ * Fileserver CLI Interface implementation.
+ * As only exit ist possible, no need to tell a story here.
  */
 public class MyFileServerCli implements IFileServerCli {
     private MyFileServer server;

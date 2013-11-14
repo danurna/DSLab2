@@ -6,11 +6,7 @@ import java.net.InetAddress;
 import java.sql.Timestamp;
 
 /**
- * Created with IntelliJ IDEA.
- * User: danielwiturna
- * Date: 14.10.13
- * Time: 17:23
- * To change this template use File | Settings | File Templates.
+ * Extended Fileserver model because FileServerInfo doesn't cover the demands.
  */
 public class FileserverEntity {
     private InetAddress address;
@@ -57,11 +53,11 @@ public class FileserverEntity {
         return lastAliveTime;
     }
 
-    public void updateLastAliveTime(){
+    public void updateLastAliveTime() {
         this.lastAliveTime = MyUtils.getCurrentTimestamp();
     }
 
-    public FileServerInfo getFileServerInfo(){
+    public FileServerInfo getFileServerInfo() {
         return new FileServerInfo(address, port, usage, online);
     }
 

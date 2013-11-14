@@ -12,10 +12,9 @@ import java.io.File;
 import java.io.IOException;
 
 /**
- * Created with IntelliJ IDEA.
- * User: danielwiturna
- * Date: 09.10.13
- * Time: 18:42
+ * Implementation of the Client ClI Interface.
+ * Keeps track if logged in or not and also if client is connected to proxy.
+ * Usually builds the requests and sends them via our real client (MyClient).
  */
 public class MyClientCli implements IClientCli {
     private MyClient client;
@@ -127,6 +126,7 @@ public class MyClientCli implements IClientCli {
     }
 
 
+    //Private helper that tries to connect, if not already connected.
     private boolean isConnected() {
         if (client.isConnected()) {
             return true;

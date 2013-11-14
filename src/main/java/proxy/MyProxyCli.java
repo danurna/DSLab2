@@ -15,10 +15,8 @@ import java.util.LinkedList;
 import java.util.List;
 
 /**
- * Created with IntelliJ IDEA.
- * User: danielwiturna
- * Date: 12.10.13
- * Time: 15:23
+ * Implementation of Proxy CLI Inteface.
+ * As proxy has only got a few commands, this is straightforward.
  */
 public class MyProxyCli implements IProxyCli {
     MyProxy realProxy;

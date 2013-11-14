@@ -5,11 +5,7 @@ import util.ComponentFactory;
 import util.Config;
 
 /**
- * Created with IntelliJ IDEA.
- * User: danielwiturna
- * Date: 11.11.13
- * Time: 15:06
- * To change this template use File | Settings | File Templates.
+ * Starts Fileserver with config fs1.
  */
 public class StartFS1 {
 

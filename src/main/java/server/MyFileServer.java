@@ -20,10 +20,10 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Created with IntelliJ IDEA.
- * User: danielwiturna
- * Date: 19.10.13
- * Time: 13:30
+ * Our fileserver with thread for sending isAlive packages to proxy.
+ * Accepts connections and puts them into a new thread. (ProxyServerBridge). Is also used by clients.
+ * <p/>
+ * This class also keeps track of some opened sockets and closes them on cleanup.
  */
 public class MyFileServer {
     private Config config;
