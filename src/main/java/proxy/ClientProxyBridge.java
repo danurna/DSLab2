@@ -20,10 +20,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Created with IntelliJ IDEA.
- * User: danielwiturna
- * Date: 17.10.13
- * Time: 12:55
+ * For each Client our proxy handles, it creates a new ClientProxyBridge
+ * to handle requests and keep the connection alive.
  */
 public class ClientProxyBridge implements IProxy, Runnable {
     private Socket clientSocket;
@@ -189,7 +187,7 @@ public class ClientProxyBridge implements IProxy, Runnable {
             }
 
         } catch (EOFException e) {
-            //Reached EOF
+            //Reached EOF. Nothing unusual.
         } catch (SocketException e) {
             System.out.println("Socket to client closed!");
         } catch (IOException e) {
@@ -203,7 +201,7 @@ public class ClientProxyBridge implements IProxy, Runnable {
                 objectOut.close();
                 clientSocket.close();
             } catch (IOException e) {
-                e.printStackTrace();
+                //Maybe it is already closed.
             }
         }
     }
@@ -276,7 +274,7 @@ public class ClientProxyBridge implements IProxy, Runnable {
             objectIn.close();
             socket.close();
         } catch (EOFException e) {
-            //Reached EOF
+            //Reached EOF. Nothing unusual.
         } catch (ClassNotFoundException e) {
             //Shouldn't occur.
             e.printStackTrace();

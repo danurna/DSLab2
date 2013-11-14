@@ -117,7 +117,7 @@ public class MyClientCli implements IClientCli {
     @Override
     @Command
     public MessageResponse exit() throws IOException {
-        if (isConnected()) {
+        if (client.isConnected()) {
             logout();
             client.closeConnection();
         }

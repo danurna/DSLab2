@@ -20,10 +20,8 @@ import java.util.HashMap;
 import java.util.Set;
 
 /**
- * Created with IntelliJ IDEA.
- * User: danielwiturna
- * Date: 17.10.13
- * Time: 16:02
+ * My client class maintains connection to proxy
+ * but also downloads and uploads data from fileserver.
  */
 public class MyClient {
     private Socket socket;
@@ -56,6 +54,7 @@ public class MyClient {
     }
 
     //Setup connection to proxy and return whether it was successful or not.
+    //Called on first request.
     public boolean connectToProxy() {
         try {
             createSockets();
@@ -69,7 +68,7 @@ public class MyClient {
     /**
      * Reads config values.
      *
-     * @return true, if values are convertFileToByteArray successfully. False, on resource not found or parse exception.
+     * @return true, if values are valid and existing. False, on resource not found or parse exception.
      */
     private boolean readConfigFile(Config config) {
         try {
@@ -115,6 +114,7 @@ public class MyClient {
      * @return Returned response. Null, if not instance of Response.
      */
     public Response sendRequest(Request request) {
+        //If out socket not available, we can not send a request.
         if (out == null) {
             return null;
         }
@@ -133,15 +133,17 @@ public class MyClient {
             this.closeConnection();
             System.out.println("Error sending request. Connections closed.");
         } catch (ClassNotFoundException e) {
-            e.printStackTrace();
+            //Shouldn't occur.
         }
 
         return null;
     }
 
+    //Close connection to proxy.
     public void closeConnection() {
         connected = false;
 
+        //If socket wasn't even opened, we don't need to close it.
         if (out == null) {
             return;
         }
@@ -156,6 +158,7 @@ public class MyClient {
         }
     }
 
+    //Tries to read a file with given filename and returns it, if successful.
     public File readFile(String filename) throws IOException {
         File file = new File(clDir + "/" + filename);
         if (file.exists()) {
@@ -193,14 +196,13 @@ public class MyClient {
             }
 
         } catch (IOException e) {
-            e.printStackTrace();
+            System.out.println("Error on downloading file. Maybe the fileserver went offline in meantime.");
         } catch (ClassNotFoundException e) {
-            e.printStackTrace();
+            //Shouldn't occur.
         }
 
         return null;
     }
-
 
     //Getter for private variable connected.
     //Indicates whether a connection to proxy is established or not.

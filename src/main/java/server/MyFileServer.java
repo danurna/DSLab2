@@ -94,7 +94,7 @@ public class MyFileServer {
                         activeSockets.add(clientSocket);
                         handleConnection(clientSocket);
                     } catch (IOException e) {
-                        System.out.println("FS: Error on serverSocket accept. Socket closed?");
+                        //serverSocket accept. Socket has been closed.
                     }
                 }
             }
@@ -104,8 +104,6 @@ public class MyFileServer {
     }
 
     private void handleConnection(Socket socket) {
-        System.out.println("Server handle connection for socket " + socket);
-
         ProxyServerBridge ProxyServerBridge = new ProxyServerBridge(socket, this);
         executor.execute(ProxyServerBridge);
     }

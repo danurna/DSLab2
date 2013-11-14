@@ -13,10 +13,8 @@ import java.net.Socket;
 import java.net.SocketException;
 
 /**
- * Created with IntelliJ IDEA.
- * User: danielwiturna
- * Date: 19.10.13
- * Time: 22:23
+ * For each connection the fileserver receives, it creates a new ProxyServerBridge
+ * to handle requests.
  */
 public class ProxyServerBridge implements IFileServer, Runnable {
     private final Socket socket;
@@ -49,11 +47,19 @@ public class ProxyServerBridge implements IFileServer, Runnable {
             }
 
         } catch (EOFException e) {
-            System.out.println("Reached EOF");
+            //Reached EOF. Nothing unusual
         } catch (SocketException e) {
-            System.out.println("Socket closed!");
+            //Socket is already closed.
         } catch (Exception e) {
             e.printStackTrace();
+        } finally {
+            //Cleanup
+            try {
+                objectIn.close();
+                objectOut.close();
+            } catch (IOException e) {
+                //Socket could be already closed.
+            }
         }
     }
 

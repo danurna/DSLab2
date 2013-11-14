@@ -24,10 +24,11 @@ import java.util.Properties;
 import java.util.concurrent.*;
 
 /**
- * Created with IntelliJ IDEA.
- * User: danielwiturna
- * Date: 12.10.13
- * Time: 15:32
+ * My proxy class listens on tcp and udp port for connection.
+ * If connection arrives at tcp port, put it into a new thread.
+ * Garbage Collection of fileserver state is implemented here.
+ * <p/>
+ * This class also keeps track of some opened sockets and closes them on cleanup.
  */
 public class MyProxy {
     private ExecutorService executor;
@@ -58,11 +59,14 @@ public class MyProxy {
             return;
         }
 
+        userMap = new ConcurrentHashMap<String, UserEntity>();
+        if (!this.readUserProperties()) {
+            return;
+        }
+
         executor = Executors.newCachedThreadPool();
         activeSockets = new ArrayList<Object>();
-        userMap = new ConcurrentHashMap<String, UserEntity>();
         fileserverMap = new ConcurrentHashMap<String, FileserverEntity>();
-        this.readUserProperties();
         this.createSockets();
         this.createFileserverGC();
     }
@@ -133,7 +137,7 @@ public class MyProxy {
      * alice.password = 12345
      * bill.password = 23456
      */
-    private void readUserProperties() {
+    private boolean readUserProperties() {
         Properties prop = new Properties();
 
         try {
@@ -141,10 +145,10 @@ public class MyProxy {
             prop.load(getClass().getClassLoader().getResourceAsStream("user.properties"));
 
             for (String string : prop.stringPropertyNames()) {
-                String[] splitStrings = string.split("\\.");
+                String[] splitStrings = string.split("\\."); //Regex for a dot.
 
                 if (splitStrings.length != 2) {
-                    return;
+                    throw new IllegalArgumentException();
                 }
 
                 String name = splitStrings[0];
@@ -152,19 +156,30 @@ public class MyProxy {
                 if (!userMap.containsKey(name)) {
                     //Create new user info for new user.
                     String password = prop.getProperty(name + ".password");
-                    long credits = Long.parseLong(prop.getProperty(name + ".credits"));
+                    String creditsString = prop.getProperty(name + ".credits");
+                    long credits = Long.parseLong(creditsString);
+
+                    if (name == null || password == null || creditsString == null) {
+                        throw new IllegalArgumentException();
+                    }
 
                     UserEntity userEntity = new UserEntity(name, password, credits, false);
                     userMap.put(name, userEntity);
                 }
             }
 
-        } catch (IOException ex) {
-            ex.printStackTrace();
+            return true;
+        } catch (Exception e) {
+            //Wrong usage or file does not exist.
+            System.err.println("Something went wrong on reading user properties.\n" +
+                    "Please provide information like this for each user:\nKey=YourRealValue \nusername.password=12345\n" +
+                    "username.credits=12345");
+            return false;
         }
 
     }
 
+    //Create Sockets for udp keep alive and tcp connections.
     private void createSockets() {
 
         Runnable serverCommunicationListen = new Runnable() {
@@ -185,10 +200,9 @@ public class MyProxy {
                         activeSockets.add(clientSocket);
                         handleClient(clientSocket);
                     } catch (IOException e) {
-                        System.out.println("Proxy: Error on serverSocket accept. Socket closed?");
-                    } catch (RejectedExecutionException e) { //From handle client
-                        e.printStackTrace();
-                        //System.err.println("Rejected Execution");
+                        //Server Socket accept. Thrown if socket is closed.
+                    } catch (RejectedExecutionException e) {
+                        //From handle client
                     }
                 }
 
@@ -214,7 +228,7 @@ public class MyProxy {
                         datagramSocket.receive(packet);
                         handleReceivedPacket(packet);
                     } catch (IOException e) {
-                        System.out.println("Proxy: Error on packetReceive accept. Socket closed?");
+                        //Exception on receive. Thrown if socket is closed.
                     }
                 }
 
@@ -225,8 +239,9 @@ public class MyProxy {
         executor.execute(serverKeepAliveListen);
     }
 
+    //Starts scheduled thread execution for GC:
     public void createFileserverGC() {
-        scheduledExecutorService = Executors.newScheduledThreadPool(1);
+        scheduledExecutorService = Executors.newScheduledThreadPool(1); //We know there will be only one garbage collector.
 
         scheduledExecutorService.scheduleAtFixedRate(
                 new Runnable() {
@@ -250,11 +265,9 @@ public class MyProxy {
     /**
      * Create new Session for one accepted client socket.
      *
-     * @param clientSocket
+     * @param clientSocket Socket for connection to put into own thread.
      */
     public void handleClient(final Socket clientSocket) {
-        System.out.println("New ClientProxyBridge for socket " + clientSocket);
-
         ClientProxyBridge clientProxyBridge = new ClientProxyBridge(clientSocket, this);
         executor.execute(clientProxyBridge);
     }
@@ -265,7 +278,7 @@ public class MyProxy {
      *
      * @param packet Received UDP packet to handle.
      */
-    public void handleReceivedPacket(DatagramPacket packet) {
+    public synchronized void handleReceivedPacket(DatagramPacket packet) {
         String received = new String(packet.getData(), 0, packet.getLength());
         String splitString[] = received.split("\\ ");
 
@@ -361,7 +374,6 @@ public class MyProxy {
         if (response != null && !(response instanceof InfoResponse)) {
             return new FileserverRequest((MessageResponse) response, null);
         }
-
 
         InfoResponse infoResponse = (InfoResponse) response;
         return new FileserverRequest(infoResponse, fs);
