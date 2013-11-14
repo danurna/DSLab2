@@ -29,6 +29,7 @@ public class MyClientCli implements IClientCli {
     @Override
     @Command
     public LoginResponse login(String username, String password) throws IOException {
+        if (!isConnected()) return null;
         if (loggedIn) {
             System.out.println("Already logged in.");
             return null;
@@ -53,24 +54,28 @@ public class MyClientCli implements IClientCli {
     @Override
     @Command
     public Response credits() throws IOException {
+        if (!isConnected()) return null;
         return client.sendRequest(new CreditsRequest());
     }
 
     @Override
     @Command
     public Response buy(long credits) throws IOException {
+        if (!isConnected()) return null;
         return client.sendRequest(new BuyRequest(credits));
     }
 
     @Override
     @Command
     public Response list() throws IOException {
+        if (!isConnected()) return null;
         return client.sendRequest(new ListRequest());
     }
 
     @Override
     @Command
     public Response download(String filename) throws IOException {
+        if (!isConnected()) return null;
         Response response = client.sendRequest(new DownloadTicketRequest(filename));
         if (response instanceof DownloadTicketResponse) {
             return client.downloadFile((DownloadTicketResponse) response);
@@ -82,6 +87,7 @@ public class MyClientCli implements IClientCli {
     @Override
     @Command
     public MessageResponse upload(String filename) throws IOException {
+        if (!isConnected()) return null;
         File file = client.readFile(filename);
         if (file == null) {
             return new MessageResponse("File does not exist.");
@@ -100,6 +106,7 @@ public class MyClientCli implements IClientCli {
     @Override
     @Command
     public MessageResponse logout() throws IOException {
+        if (!isConnected()) return null;
         MessageResponse response = (MessageResponse) client.sendRequest(new LogoutRequest());
         if (response != null && response.toString().equals("Successfully logged out."))
             loggedIn = false;
@@ -110,10 +117,27 @@ public class MyClientCli implements IClientCli {
     @Override
     @Command
     public MessageResponse exit() throws IOException {
-        logout();
-        client.closeConnection();
-        client.stopTimer();
+        if (isConnected()) {
+            logout();
+            client.closeConnection();
+        }
+
         System.in.close();
         return new MessageResponse("Bye!");
+    }
+
+
+    private boolean isConnected() {
+        if (client.isConnected()) {
+            return true;
+        } else {
+            loggedIn = false;
+            if (client.connectToProxy()) {
+                return true;
+            } else {
+                System.out.println("Proxy not reachable. Please try it again later.");
+                return false;
+            }
+        }
     }
 }

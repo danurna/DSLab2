@@ -28,21 +28,7 @@ public class ComponentFactory {
         System.out.println("startClient");
         IClientCli clientCli = new MyClientCli(new MyClient(config));
         shell.register(clientCli);
-        final Shell currentShell = shell;
-        Thread thread = new Thread(new Runnable() {
-
-            @Override
-            public void run() {
-                try {
-                    currentShell.run();
-                } catch (IllegalArgumentException e) {
-                    System.out.println("USAGE!");
-                }
-
-            }
-        });
-        thread.start();
-
+        new Thread(shell).start();
 
         return clientCli;
     }
@@ -59,9 +45,7 @@ public class ComponentFactory {
         System.out.println("startProxy");
         IProxyCli proxyCli = new MyProxyCli(new MyProxy(config));
         shell.register(proxyCli);
-        new ShellThreader(shell).start();
-        // Thread thread = new Thread(shell);
-        // thread.start();
+        new Thread(shell).start();
 
         return proxyCli;
     }
@@ -78,8 +62,7 @@ public class ComponentFactory {
         System.out.println("startFileServer");
         IFileServerCli fileServerCli = new MyFileServerCli(new MyFileServer(config));
         shell.register(fileServerCli);
-        Thread thread = new Thread(shell);
-        thread.start();
+        new Thread(shell).start();
 
         return fileServerCli;
     }

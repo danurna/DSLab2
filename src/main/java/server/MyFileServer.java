@@ -7,7 +7,6 @@ import message.response.MessageResponse;
 import util.Config;
 import util.MyUtils;
 
-import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.net.*;
@@ -212,8 +211,16 @@ public class MyFileServer {
         scheduledExecutorService.shutdownNow();
         System.in.close();
         for (Object o : activeSockets) {
-            Closeable c = (Closeable) o;
-            c.close();
+            if (o instanceof Socket) {
+                Socket s = (Socket) o;
+                s.close();
+            } else if (o instanceof DatagramSocket) {
+                DatagramSocket s = (DatagramSocket) o;
+                s.close();
+            } else if (o instanceof ServerSocket) {
+                ServerSocket s = (ServerSocket) o;
+                s.close();
+            }
         }
     }
 

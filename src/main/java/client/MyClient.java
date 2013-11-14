@@ -18,8 +18,6 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.util.HashMap;
 import java.util.Set;
-import java.util.Timer;
-import java.util.TimerTask;
 
 /**
  * Created with IntelliJ IDEA.
@@ -35,47 +33,36 @@ public class MyClient {
     private int tcpPort;
     private String clDir;
     private HashMap<String, Integer> versionMap;
-    private boolean exit = false;
+    private boolean connected;
 
     public MyClient(Config config) {
         if (!this.readConfigFile(config)) {
+            //If reading config fails, we fail too.
             return;
         }
 
+        connected = false;
         versionMap = new HashMap<String, Integer>();
         this.initVersionsMap();
-        this.connectToProxy();
-    }
-
-    private void connectToProxy() {
-        final Timer timer = new Timer();
-
-        //Timer for connection establishing
-        timer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                if (exit)
-                    timer.cancel();
-
-                try {
-                    createSockets();
-                    timer.cancel();
-                    System.out.println("Connected to Proxy.");
-                } catch (IOException e) {
-                    System.out.println("Connecting to proxy failed. Automatically trying in 3 seconds again.");
-                }
-
-            }
-        }, 0, 3000);
     }
 
     public static void main(String[] args) {
         try {
             Shell shell = new Shell("client", System.out, System.in);
             new ComponentFactory().startClient(new Config("client"), shell);
-            shell.run();
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    //Setup connection to proxy and return whether it was successful or not.
+    public boolean connectToProxy() {
+        try {
+            createSockets();
+            connected = true;
+            return true;
+        } catch (IOException e) {
+            return false;
         }
     }
 
@@ -109,11 +96,12 @@ public class MyClient {
         }
     }
 
-
+    //Lookup versionmap for file with given filename.
     public Integer getVersionForFile(String filename) {
         return versionMap.get(filename);
     }
 
+    //Establish connection to proxy with object in- and outputstream.
     private void createSockets() throws IOException {
         socket = new Socket(proxyAddress, tcpPort);
         out = new ObjectOutputStream(socket.getOutputStream());
@@ -127,6 +115,10 @@ public class MyClient {
      * @return Returned response. Null, if not instance of Response.
      */
     public Response sendRequest(Request request) {
+        if (out == null) {
+            return null;
+        }
+
         try {
             out.writeObject(request);
             out.flush();
@@ -138,9 +130,8 @@ public class MyClient {
             }
 
         } catch (IOException e) {
-            System.out.println("Error on client sendRequest. Closing connection.");
             this.closeConnection();
-            this.connectToProxy();
+            System.out.println("Error sending request. Connections closed.");
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
@@ -149,6 +140,12 @@ public class MyClient {
     }
 
     public void closeConnection() {
+        connected = false;
+
+        if (out == null) {
+            return;
+        }
+
         try {
             out.close();
             in.close();
@@ -157,10 +154,6 @@ public class MyClient {
             //Exceptions can occur here after losing connection
             //nothing to worry about.
         }
-    }
-
-    public void stopTimer() {
-        exit = true;
     }
 
     public File readFile(String filename) throws IOException {
@@ -193,8 +186,7 @@ public class MyClient {
             //If right response, save file.
             if (object instanceof DownloadFileResponse) {
                 DownloadFileResponse downloadFileResponse = (DownloadFileResponse) object;
-                //TODO: Get real version of downloaded file. For the moment, use 0. DownloadFileResponse doesn't
-                //      provide enough information.
+                //For the meantime we use version 0 everywhere.
                 versionMap.put(response.getTicket().getFilename(), 0);
                 MyUtils.saveByteArrayAsFile(downloadFileResponse.getContent(), clDir + "/" + response.getTicket().getFilename());
                 return downloadFileResponse;
@@ -209,4 +201,10 @@ public class MyClient {
         return null;
     }
 
+
+    //Getter for private variable connected.
+    //Indicates whether a connection to proxy is established or not.
+    public boolean isConnected() {
+        return connected;
+    }
 }

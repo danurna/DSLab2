@@ -13,7 +13,6 @@ import util.ComponentFactory;
 import util.Config;
 import util.MyUtils;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -296,8 +295,16 @@ public class MyProxy {
         scheduledExecutorService.shutdownNow();
         System.in.close();
         for (Object o : activeSockets) {
-            Closeable c = (Closeable) o;
-            c.close();
+            if (o instanceof Socket) {
+                Socket s = (Socket) o;
+                s.close();
+            } else if (o instanceof DatagramSocket) {
+                DatagramSocket s = (DatagramSocket) o;
+                s.close();
+            } else if (o instanceof ServerSocket) {
+                ServerSocket s = (ServerSocket) o;
+                s.close();
+            }
         }
     }
 

@@ -19,7 +19,6 @@ public class StartFS1 {
             System.out.println(configName);
             Shell shell = new Shell(configName, System.out, System.in);
             new ComponentFactory().startFileServer(new Config(configName), shell);
-            shell.run();
         } catch (Exception e) {
             e.printStackTrace();
         }
