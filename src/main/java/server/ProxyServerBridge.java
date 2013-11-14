@@ -37,7 +37,7 @@ public class ProxyServerBridge implements IFileServer, Runnable {
             objectIn = new ObjectInputStream(socket.getInputStream());
 
             Object obj;
-            while ((obj = objectIn.readObject()) != null) {
+            while ((obj = objectIn.readObject()) != null) { //EOF Exception
                 Response response = performRequest(obj);
 
                 if (response == null)

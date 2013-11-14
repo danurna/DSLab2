@@ -55,7 +55,7 @@ public class ClientProxyBridge implements IProxy, Runnable {
 
     @Override
     public Response credits() throws IOException {
-        if (currentUser == null) {
+        if (currentUser == null) { //User authenticated?
             return null;
         }
 
@@ -64,7 +64,7 @@ public class ClientProxyBridge implements IProxy, Runnable {
 
     @Override
     public Response buy(BuyRequest credits) throws IOException {
-        if (currentUser == null) {
+        if (currentUser == null) { //User authenticated?
             return null;
         }
 
@@ -74,7 +74,7 @@ public class ClientProxyBridge implements IProxy, Runnable {
 
     @Override
     public Response list() throws IOException {
-        if (currentUser == null) {
+        if (currentUser == null) { //User authenticated?
             return null;
         }
 
@@ -86,7 +86,7 @@ public class ClientProxyBridge implements IProxy, Runnable {
                 if (listResponse != null) //valid response needed.
                     files.addAll(listResponse.getFileNames());
             } catch (IOException e) {
-                System.out.println("Connection to fileserver not successful!");
+                System.out.println("Connection to one fileserver not successful!");
             }
 
         }
@@ -96,7 +96,7 @@ public class ClientProxyBridge implements IProxy, Runnable {
 
     @Override
     public Response download(DownloadTicketRequest request) throws IOException {
-        if (currentUser == null) {
+        if (currentUser == null) { //User authenticated?
             return null;
         }
 
@@ -104,7 +104,7 @@ public class ClientProxyBridge implements IProxy, Runnable {
         FileserverRequest fileserverRequest = myProxy.getLeastUsedFileserverForFile(filename, this);
 
         if (fileserverRequest == null) { //no fs available
-            return new MessageResponse("No fileservers available.");
+            return new MessageResponse("No fileservers available for requested file.");
         }
 
         if (fileserverRequest.getFileserverEntity() == null) { //no fs with file
@@ -128,24 +128,22 @@ public class ClientProxyBridge implements IProxy, Runnable {
 
     @Override
     public MessageResponse upload(UploadRequest request) throws IOException {
-        if (currentUser == null) {
+        if (currentUser == null) { //User authenticated?
             return null;
         }
 
         boolean didUploadAtLeastOnce = false;
         //Upload file to each fileserver online.
         for (FileserverEntity entity : myProxy.getFileserverList()) {
-            if (entity.isOnline()) {
+            if (entity.isOnline()) { //FS has to be online.
                 try {
                     MessageResponse messageResponse = (MessageResponse) performFileserverRequest(request, entity);
                     System.out.println(messageResponse);
                     didUploadAtLeastOnce = true;
-                } catch (SocketException e) {
-                    System.out.println("Connection to fileserver not successful!");
+                } catch (SocketException e) { //fileserver socket could be closed.
+                    System.out.println("Connection to one fileserver not successful!");
                 }
-
             }
-
         }
 
         if (!didUploadAtLeastOnce) {
@@ -154,12 +152,12 @@ public class ClientProxyBridge implements IProxy, Runnable {
 
         //Increase credits of user for upload.
         currentUser.increaseCredits(request.getContent().length * 2);
-        return new MessageResponse("Uploaded files.");
+        return new MessageResponse("Uploaded files successful!");
     }
 
     @Override
     public MessageResponse logout() throws IOException {
-        if (currentUser == null) {
+        if (currentUser == null) { //User authenticated?
             return null;
         }
         boolean loggedIn = false;
@@ -191,14 +189,15 @@ public class ClientProxyBridge implements IProxy, Runnable {
             }
 
         } catch (EOFException e) {
-            System.out.println("Reached EOF");
+            //Reached EOF
         } catch (SocketException e) {
             System.out.println("Socket to client closed!");
         } catch (IOException e) {
             e.printStackTrace();
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
-        } /*finally {
+        } finally {
+            //Cleanup
             try {
                 objectIn.close();
                 objectOut.close();
@@ -206,7 +205,7 @@ public class ClientProxyBridge implements IProxy, Runnable {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-        }*/
+        }
     }
 
     /**
@@ -239,6 +238,7 @@ public class ClientProxyBridge implements IProxy, Runnable {
         }
 
         if (response == null) {
+            //Default response if not logged in, is null.
             response = new MessageResponse("Please log in.");
         }
 
@@ -252,7 +252,7 @@ public class ClientProxyBridge implements IProxy, Runnable {
         try {
             response = this.performFileserverRequest(request, entity);
         } catch (IOException e) {
-            System.out.println("Connection to fileserver not successful.");
+            System.out.println("Connection to one fileserver not successful.");
         }
 
         return response;
@@ -276,7 +276,7 @@ public class ClientProxyBridge implements IProxy, Runnable {
             objectIn.close();
             socket.close();
         } catch (EOFException e) {
-            System.out.println("Reached EOF");
+            //Reached EOF
         } catch (ClassNotFoundException e) {
             //Shouldn't occur.
             e.printStackTrace();
