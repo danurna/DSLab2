@@ -1,10 +1,10 @@
 *.class
 
-
-build.xml
-
 # Package Files #
 *.jar
 *.war
 *.ear
+.idea/
 build/
+*.iml
+build.xml

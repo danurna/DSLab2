@@ -8,6 +8,7 @@ import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+import org.bouncycastle.util.encoders.Base64;
 
 /**
  * Created with IntelliJ IDEA.
@@ -88,5 +89,23 @@ public class MyUtils {
         Set<String> files = new HashSet<String>();
         files.addAll(Arrays.asList(file.list()));
         return files;
+    }
+
+    /**
+     * Encodes data base64
+     * @param data - data to encode
+     * @return base64 encoded data.
+     */
+    public static byte[] base64encodeBytes(byte[] data){
+        return Base64.encode(data);
+    }
+
+    /**
+     * Decodes base64-encoded data.
+     * @param data - base64-encoded data
+     * @return decoded data.
+     */
+    public static byte[] base64decodeBytes(byte[] data){
+        return Base64.decode(data);
     }
 }
