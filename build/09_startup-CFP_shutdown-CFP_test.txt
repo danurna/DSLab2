@@ -1,7 +1,0 @@
-%Starting Client->Fileserver->Proxy -- Shutdown Client->Fileserver->Proxy
-*	startClient client
-*	startFileServer fs1
-*	startProxy proxy
-
-fs1:	!exit
-proxy:	!exit
