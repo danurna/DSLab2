@@ -5,8 +5,11 @@ import client.IClientCli;
 import client.MyClient;
 import client.MyClientCli;
 import proxy.IProxyCli;
+import proxy.IProxyRMI;
 import proxy.MyProxy;
 import proxy.MyProxyCli;
+import proxy.ProxyManagementComponent;
+import proxy.ProxyRMI;
 import server.IFileServerCli;
 import server.MyFileServer;
 import server.MyFileServerCli;
@@ -26,7 +29,7 @@ public class ComponentFactory {
      */
     public IClientCli startClient(Config config, Shell shell) throws Exception {
         System.out.println("startClient");
-        IClientCli clientCli = new MyClientCli(new MyClient(config));
+        IClientCli clientCli = new MyClientCli(new MyClient(config, new Config("mc")));
         shell.register(clientCli);
         new Thread(shell).start();
 
@@ -43,7 +46,12 @@ public class ComponentFactory {
      */
     public IProxyCli startProxy(Config config, Shell shell) throws Exception {
         System.out.println("startProxy");
-        IProxyCli proxyCli = new MyProxyCli(new MyProxy(config));
+        MyProxy myProxy = new MyProxy(config);
+        IProxyCli proxyCli = new MyProxyCli(myProxy);
+        ProxyManagementComponent pmc = 
+        		new ProxyManagementComponent(new Config("mc"), myProxy);
+        myProxy.setProxyManagementComponent(pmc);
+        
         shell.register(proxyCli);
         new Thread(shell).start();
 
