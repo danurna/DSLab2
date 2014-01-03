@@ -3,6 +3,7 @@ package proxy;
 import java.rmi.Remote;
 import java.util.Collection;
 
+import client.IStringCallback;
 import model.FileserverEntity;
 
 public interface IProxyRMI extends Remote {
