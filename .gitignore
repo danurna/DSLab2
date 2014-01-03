@@ -1,10 +1,12 @@
 *.class
 
+build\*
+
+build.xml
+.gitignore
+
 # Package Files #
 *.jar
 *.war
 *.ear
-.idea/
 build/
-*.iml
-build.xml

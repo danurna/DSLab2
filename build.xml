@@ -29,6 +29,17 @@
             </fileset>
         </copy>
     </target>
+    
+    <target name="move">
+        <copy todir="${build.dir}">
+            <fileset dir="${src.resources.dir}">
+                <include name="*.properties"/>
+            </fileset>
+            <fileset dir="${test.resources.dir}">
+                <include name="*.txt"/>
+            </fileset>
+        </copy>
+    </target>
 
     <target name="test" description="Test the solution" depends="compile">
         <mkdir dir="${reports.dir}"/>
@@ -43,19 +54,19 @@
         </junit>
     </target>
 
-    <target name="run-proxy" depends="compile" description="Run proxy.">
+    <target name="run-proxy" depends="move" description="Run proxy.">
         <java classname="proxy.MyProxy" fork="true" classpathref="project.classpath"/>
     </target>
 
-    <target name="run-fileserver1" depends="compile" description="Run 1st fileserver.">
+    <target name="run-fileserver1" depends="move" description="Run 1st fileserver.">
         <java classname="server.StartFS1" fork="true" classpathref="project.classpath"/>
     </target>
 
-    <target name="run-fileserver2" depends="compile" description="Run 2nd fileserver.">
+    <target name="run-fileserver2" depends="move" description="Run 2nd fileserver.">
         <java classname="server.StartFS2" fork="true" classpathref="project.classpath"/>
     </target>
 
-    <target name="run-client" depends="compile" description="Run client.">
+    <target name="run-client" depends="move" description="Run client.">
         <java classname="client.MyClient" fork="true" classpathref="project.classpath"/>
     </target>
 
