@@ -73,15 +73,15 @@ public class SimpleTest {
         assertTrue(String.format("Response must start with '%s' but was '%s'", expected, actual), actual.startsWith(expected));
 
         actual = client.credits().toString();
-        expected = "192";
+        expected = "193";
         assertTrue(String.format("Response must contain '%s' but was '%s'", expected, actual), actual.contains(expected));
 
         actual = client.upload("upload.txt").toString();
-        expected = "Uploaded files.";
+        expected = "Uploaded files";
         assertTrue(String.format("Response must contain '%s' but was '%s'", expected, actual), actual.contains(expected));
 
         actual = client.credits().toString();
-        expected = "292";
+        expected = "291";
         assertTrue(String.format("Response must contain '%s' but was '%s'", expected, actual), actual.contains(expected));
 
         actual = client.logout().toString();
