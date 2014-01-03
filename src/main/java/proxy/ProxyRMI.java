@@ -1,5 +1,6 @@
 package proxy;
 
+import java.rmi.RemoteException;
 import java.util.Collection;
 
 import client.IStringCallback;
@@ -9,41 +10,39 @@ public class ProxyRMI implements IProxyRMI {
 	
 	ProxyManagementComponent pmc;
 	
-	public ProxyRMI(ProxyManagementComponent pmc) {
+	public ProxyRMI(ProxyManagementComponent pmc) throws RemoteException {
 		this.pmc = pmc;
 	}
 	
 	@Override
-	public Collection<FileserverEntity> getReadQuorum() {
+	public Collection<FileserverEntity> getReadQuorum() throws RemoteException {
+		return pmc.getProxy().getNR();
+	}
+
+	@Override
+	public Collection<FileserverEntity> getWriteQuorum() throws RemoteException {
+		return pmc.getProxy().getNW();
+	}
+
+	@Override
+	public Collection<FileEntity> getTop3DownloadedFiles() throws RemoteException {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public Collection<FileserverEntity> getWriteQuorum() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Collection<FileEntity> getTop3DownloadedFiles() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public void subscribeToFile(String fileName, IStringCallback callback) {
+	public void subscribeToFile(String fileName, IStringCallback callback) throws RemoteException {
 		
 	}
 
 	@Override
-	public byte[] getProxyPublicKey() {
+	public byte[] getProxyPublicKey() throws RemoteException {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public byte[] setClientPublicKey() {
+	public byte[] setClientPublicKey() throws RemoteException {
 		// TODO Auto-generated method stub
 		return null;
 	}

@@ -79,7 +79,14 @@ public class MyClient {
             e.printStackTrace();
         }
     }
-
+    
+    public Registry getRemoteRegistry() {
+    	return remoteRegistry;
+    }
+    public IProxyRMI getProxyRMI() {
+    	return proxyRMI;
+    }
+    
     //Setup connection to proxy and return whether it was successful or not.
     //Called on first request.
     public boolean connectToProxy() {

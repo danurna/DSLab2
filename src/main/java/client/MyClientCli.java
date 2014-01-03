@@ -6,10 +6,13 @@ import message.request.*;
 import message.response.DownloadTicketResponse;
 import message.response.LoginResponse;
 import message.response.MessageResponse;
+import model.FileserverEntity;
 import util.MyUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.rmi.RemoteException;
+import java.util.Collection;
 
 /**
  * Implementation of the Client ClI Interface.
@@ -124,7 +127,21 @@ public class MyClientCli implements IClientCli {
         System.in.close();
         return new MessageResponse("Bye!");
     }
-
+    
+    @Command
+    public MessageResponse readQuorum() {
+    	try {
+    		Collection<FileserverEntity> fseCollection = client.getProxyRMI().getReadQuorum();
+			String out="";
+	    	for (FileserverEntity fse : fseCollection) {
+	    		out+=fse.getAddress().toString()+"\n";
+	    	}
+	    	return new MessageResponse(out);
+		} catch (RemoteException e) {
+			return new MessageResponse("A connection error occured. Please try again later.");
+		}
+    	
+    }
 
     //Private helper that tries to connect, if not already connected.
     private boolean isConnected() {
