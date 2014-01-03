@@ -351,6 +351,7 @@ public class MyProxy {
      */
     public FileserverRequest getLeastUsedFileserverForFile(String filename, ClientProxyBridge bridge) {
         Collection<FileserverEntity> list = fileserverMap.values();
+
         FileserverEntity fs = getLeastUsedFileserverFromList(list);
 
         if (fs == null) { //no fs available
@@ -377,6 +378,40 @@ public class MyProxy {
 
         InfoResponse infoResponse = (InfoResponse) response;
         return new FileserverRequest(infoResponse, fs);
+    }
+    private Collection<FileserverEntity> getQuorum(boolean nR){
+        int quorum = 0;
+        if (nR){
+            quorum = ((int) Math.floor(fileserverMap.size() / 2.0))+1;
+        }else{
+            quorum = ((int) Math.ceil(fileserverMap.size() / 2.0))+1;
+        }
+        int counter = 0;
+        Collection<FileserverEntity> list = fileserverMap.values();
+        Collection<FileserverEntity> quorumlist = new ArrayList<FileserverEntity>();
+        for (FileserverEntity entity1 : list) {
+            if (entity1.isOnline()){
+                if (counter<quorum){
+                    quorumlist.add(entity1);
+                    counter++;
+                }else{
+                    for (FileserverEntity entity : quorumlist){
+                        if (entity.getUsage()>entity1.getUsage()){
+                            quorumlist.remove(entity);
+                            quorumlist.add(entity1);
+                        }
+                    }
+                }
+            }
+        }
+        return quorumlist;
+    }
+    public Collection<FileserverEntity> getNR(){
+        return getQuorum(true);
+    }
+
+    public Collection<FileserverEntity> getNW(){
+        return getQuorum(false);
     }
 
     /**
