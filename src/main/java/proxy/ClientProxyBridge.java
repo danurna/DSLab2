@@ -98,7 +98,7 @@ public class ClientProxyBridge implements IProxy, Runnable {
             return null;
         }
         String filename = request.getFilename();
-        FileserverRequest fileserverRequest = myProxy.getLeastUsedFileserverForFile(filename,myProxy.getNR() , this);
+        FileserverRequest fileserverRequest = myProxy.getLeastUsedFileserverForFile(filename,myProxy.getReadQuorum() , this);
 
         if (fileserverRequest == null) { //no fs available
             return new MessageResponse("No fileservers available for requested file.");
@@ -132,7 +132,7 @@ public class ClientProxyBridge implements IProxy, Runnable {
         boolean didUploadAtLeastOnce = false;
         //Upload file to each fileserver online.
 
-        for (FileserverEntity entity : myProxy.getNW()) {
+        for (FileserverEntity entity : myProxy.getWriteQuorum()) {
             if (entity.isOnline()) { //FS has to be online.
                 try {
                     MessageResponse messageResponse = (MessageResponse) performFileserverRequest(request, entity);
