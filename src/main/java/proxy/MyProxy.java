@@ -42,6 +42,8 @@ public class MyProxy {
     private int udpPort;
     private int fsTimeout;
     private int fsPeriod;
+    
+	private ProxyManagementComponent pmc;
 
     public static void main(String[] args) {
         try {
@@ -70,7 +72,11 @@ public class MyProxy {
         this.createSockets();
         this.createFileserverGC();
     }
-
+    
+    public void setProxyManagementComponent(ProxyManagementComponent pmc) {
+    	this.pmc = pmc;
+    }
+    
     /**
      * Reads config values.
      *

@@ -46,9 +46,12 @@ public class ComponentFactory {
      */
     public IProxyCli startProxy(Config config, Shell shell) throws Exception {
         System.out.println("startProxy");
-        IProxyCli proxyCli = new MyProxyCli(new MyProxy(config));
-        ProxyManagementComponent proxyRMI =
-        		new ProxyManagementComponent(new Config("mc"), (MyProxy)proxyCli);
+        MyProxy myProxy = new MyProxy(config);
+        IProxyCli proxyCli = new MyProxyCli(myProxy);
+        ProxyManagementComponent pmc = 
+        		new ProxyManagementComponent(new Config("mc"), myProxy);
+        myProxy.setProxyManagementComponent(pmc);
+        
         shell.register(proxyCli);
         new Thread(shell).start();
 
