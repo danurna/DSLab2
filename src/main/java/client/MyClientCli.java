@@ -131,13 +131,20 @@ public class MyClientCli implements IClientCli {
     @Command
     public MessageResponse readQuorum() {
     	try {
-    		Collection<FileserverEntity> fseCollection = client.getProxyRMI().getReadQuorum();
-			String out="";
-	    	for (FileserverEntity fse : fseCollection) {
-	    		out+=fse.getAddress().toString()+"\n";
-	    	}
-	    	return new MessageResponse(out);
+	    	return new MessageResponse("Read-Quorum is set to "+client.getProxyRMI().getReadQuorumSize()+".");
 		} catch (RemoteException e) {
+			e.printStackTrace();
+			return new MessageResponse("A connection error occured. Please try again later.");
+		}
+    	
+    }
+    
+    @Command
+    public MessageResponse writeQuorum() {
+    	try {
+	    	return new MessageResponse("Write-Quorum is set to "+client.getProxyRMI().getWriteQuorumSize()+".");
+		} catch (RemoteException e) {
+			e.printStackTrace();
 			return new MessageResponse("A connection error occured. Please try again later.");
 		}
     	

@@ -8,10 +8,10 @@ import client.IStringCallback;
 import model.FileserverEntity;
 
 public interface IProxyRMI extends Remote {
-	Collection<FileserverEntity> getReadQuorum() throws RemoteException;
-	Collection<FileserverEntity> getWriteQuorum() throws RemoteException;
+	int getReadQuorumSize() throws RemoteException;
+	int getWriteQuorumSize() throws RemoteException;
 	Collection<FileEntity> getTop3DownloadedFiles() throws RemoteException;
 	void subscribeToFile(String fileName, IStringCallback callback) throws RemoteException;
 	byte[] getProxyPublicKey() throws RemoteException;
-	byte[] setClientPublicKey() throws RemoteException;
+	void setClientPublicKey(String user, byte[] key) throws RemoteException;
 }

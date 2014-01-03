@@ -15,12 +15,12 @@ public class ProxyRMI implements IProxyRMI {
 	}
 	
 	@Override
-	public Collection<FileserverEntity> getReadQuorum() throws RemoteException {
+	public int getReadQuorumSize() throws RemoteException {
 		return pmc.getProxy().getNR();
 	}
 
 	@Override
-	public Collection<FileserverEntity> getWriteQuorum() throws RemoteException {
+	public int getWriteQuorumSize() throws RemoteException {
 		return pmc.getProxy().getNW();
 	}
 
@@ -37,14 +37,12 @@ public class ProxyRMI implements IProxyRMI {
 
 	@Override
 	public byte[] getProxyPublicKey() throws RemoteException {
-		// TODO Auto-generated method stub
-		return null;
+		return pmc.getProxy().getPublicKey();
 	}
 
 	@Override
-	public byte[] setClientPublicKey() throws RemoteException {
-		// TODO Auto-generated method stub
-		return null;
+	public void setClientPublicKey(String user, byte[] key) throws RemoteException {
+		pmc.writeClientPublicKey(user, key);
 	}
 
 }

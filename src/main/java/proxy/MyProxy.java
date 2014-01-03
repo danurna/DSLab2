@@ -43,6 +43,8 @@ public class MyProxy {
     private int fsTimeout;
     private int fsPeriod;
     
+    private byte[] proxyPublicKey;
+    
 	private ProxyManagementComponent pmc;
 
     public static void main(String[] args) {
@@ -391,7 +393,7 @@ public class MyProxy {
         if (nR){
             quorum = ((int) Math.floor(fileserverMap.size() / 2.0))+1;
         }else{
-            quorum = ((int) Math.ceil(fileserverMap.size() / 2.0))+1;
+            quorum = Math.max(((int) Math.ceil(fileserverMap.size() / 2.0))+1,fileserverMap.size());
         }
         int counter = 0;
         Collection<FileserverEntity> list = fileserverMap.values();
@@ -413,11 +415,16 @@ public class MyProxy {
         }
         return quorumlist;
     }
-    public Collection<FileserverEntity> getNR(){
+    public int getNR() {
+    	return ((int) Math.floor(fileserverMap.size() / 2.0))+1;
+    }
+    public Collection<FileserverEntity> getReadQuorum(){
         return getQuorum(true);
     }
-
-    public Collection<FileserverEntity> getNW(){
+    public int getNW() {
+    	return Math.max(((int) Math.ceil(fileserverMap.size() / 2.0))+1,fileserverMap.size());
+    }
+    public Collection<FileserverEntity> getWriteQuorum(){
         return getQuorum(false);
     }
 
@@ -438,5 +445,8 @@ public class MyProxy {
 
         return false;
     }
-
+    
+    protected byte[] getPublicKey() {
+    	return proxyPublicKey;
+    }
 }

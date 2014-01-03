@@ -1,6 +1,7 @@
 package proxy;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -67,5 +68,9 @@ public class ProxyManagementComponent {
     
     protected MyProxy getProxy() {
     	return proxy;
+    }
+    
+    protected void writeClientPublicKey(String user, byte[] key) {
+    	//FileOutputStream fos = new FileOutputStream(keysDir);
     }
 }
