@@ -345,12 +345,13 @@ public class MyProxy {
     /**
      * Searches for least used, online Fileserver having the file for given filename.
      *
+     *
      * @param filename - Filename of file, we are searching a fileserver for.
-     * @param bridge   - Bridge to be used to send fileserver request.
-     * @return FileserverRequest with Response and FileserverEntity, if server found. Null, if no fs at all. FileserverRequest w/o FileserverEntity, if file not available.
+     * @param nr
+     *@param bridge   - Bridge to be used to send fileserver request.  @return FileserverRequest with Response and FileserverEntity, if server found. Null, if no fs at all. FileserverRequest w/o FileserverEntity, if file not available.
      */
-    public FileserverRequest getLeastUsedFileserverForFile(String filename, ClientProxyBridge bridge) {
-        Collection<FileserverEntity> list = fileserverMap.values();
+    public FileserverRequest getLeastUsedFileserverForFile(String filename, Collection<FileserverEntity> nr, ClientProxyBridge bridge) {
+        Collection<FileserverEntity> list = nr;
 
         FileserverEntity fs = getLeastUsedFileserverFromList(list);
 
