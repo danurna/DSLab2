@@ -1,14 +1,19 @@
 package util;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
+import java.security.PrivateKey;
+import java.security.Security;
 import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.util.encoders.Base64;
+import java.security.PublicKey;
+import org.bouncycastle.openssl.PEMReader;
+import java.security.KeyPair;
+import org.bouncycastle.openssl.PasswordFinder;
 
 /**
  * Created with IntelliJ IDEA.
@@ -108,4 +113,49 @@ public class MyUtils {
     public static byte[] base64decodeBytes(byte[] data){
         return Base64.decode(data);
     }
+
+    /**
+     * Read PEM formatted RSA public key.
+     * @param path - Path to pem file
+     * @return publicKey
+     * @throws IOException
+     */
+    public static PublicKey getPublicKeyForPath(String path) throws IOException {
+        PEMReader in = new PEMReader(new FileReader(path));
+        PublicKey publicKey = (PublicKey) in.readObject();
+        return publicKey;
+    }
+
+    /**
+     * Read PEM formatted RSA private key.
+     * @param path - Path to pem file
+     * @return private key
+     * @throws IOException
+     */
+    public static PrivateKey getPrivateKeyForPath(String path) throws IOException {
+
+        PEMReader in = new PEMReader(new FileReader(path), new PasswordFinder() {
+
+            @Override
+            public char[] getPassword() {
+                // reads the password from standard input for decrypting the private key
+                System.out.println("Enter pass phrase:");
+                try {
+                    InputStreamReader isr = new InputStreamReader(System.in);
+                    BufferedReader bf = new BufferedReader(isr);
+                    return bf.readLine().toCharArray();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                // in case of error return empty password
+                 return "".toCharArray();
+            }
+        });
+        KeyPair keyPair = (KeyPair) in.readObject();
+        PrivateKey privateKey = keyPair.getPrivate();
+        return privateKey;
+    }
+
+
+
 }

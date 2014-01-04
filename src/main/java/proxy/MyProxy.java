@@ -18,6 +18,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.security.PrivateKey;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Properties;
@@ -37,11 +38,15 @@ public class MyProxy {
     private ConcurrentHashMap<String, UserEntity> userMap;
     private ConcurrentHashMap<String, FileserverEntity> fileserverMap;
     private Collection<Object> activeSockets;
+    private PrivateKey privateKey;
     //Config values
     private int tcpPort;
     private int udpPort;
     private int fsTimeout;
     private int fsPeriod;
+    private String privateKeyPath;
+    private String hmacKeyPath;
+    private String keysDir;
 
     public static void main(String[] args) {
         try {
@@ -67,6 +72,11 @@ public class MyProxy {
         executor = Executors.newCachedThreadPool();
         activeSockets = new ArrayList<Object>();
         fileserverMap = new ConcurrentHashMap<String, FileserverEntity>();
+        privateKey = this.readPrivateKey();
+        if(privateKey == null){
+            return;
+        }
+
         this.createSockets();
         this.createFileserverGC();
     }
@@ -82,6 +92,9 @@ public class MyProxy {
             udpPort = config.getInt("udp.port");
             fsPeriod = config.getInt("fileserver.checkPeriod");
             fsTimeout = config.getInt("fileserver.timeout");
+            privateKeyPath = config.getString("key");
+            hmacKeyPath = config.getString("hmac.key");
+            keysDir = config.getString("keys.dir");
         } catch (Exception e) {
             System.err.println("Something went wrong on reading Proxy properties.\n" +
                     "Please provide information like this:\nKey=YourRealValue \ntcp.port=12345\n" +
@@ -430,6 +443,19 @@ public class MyProxy {
         }
 
         return false;
+    }
+
+    private PrivateKey readPrivateKey(){
+        PrivateKey ret = null;
+        try {
+            ret = MyUtils.getPrivateKeyForPath(privateKeyPath);
+        } catch (IOException e) {
+            e.printStackTrace();
+            //Wrong usage or file does not exist.
+            System.err.println("Something went wrong on reading proxy's private key.\n");
+            return null;
+        }
+        return ret;
     }
 
 }
