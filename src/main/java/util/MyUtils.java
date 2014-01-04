@@ -1,19 +1,18 @@
 package util;
 
 import java.io.*;
-import java.security.PrivateKey;
-import java.security.Security;
+import java.security.*;
 import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.util.encoders.Base64;
-import java.security.PublicKey;
 import org.bouncycastle.openssl.PEMReader;
-import java.security.KeyPair;
 import org.bouncycastle.openssl.PasswordFinder;
+
+import javax.crypto.KeyGenerator;
+import javax.crypto.SecretKey;
 
 /**
  * Created with IntelliJ IDEA.
@@ -175,6 +174,38 @@ public class MyUtils {
         KeyPair keyPair = (KeyPair) in.readObject();
         PrivateKey privateKey = keyPair.getPrivate();
         return privateKey;
+    }
+
+
+    /**
+     * Generates a secure random number of given length.
+     * @param length
+     * @return secure random number.
+     */
+    public static byte[] generateSecureRandomNumber(int length){
+        SecureRandom secureRandom = new SecureRandom();
+        final byte[] number = new byte[length];
+        secureRandom.nextBytes(number);
+        return number;
+    }
+
+    /**
+     * Generates secret AES Key with given key size.
+     * @param keySize
+     * @return generated AES Key
+     */
+    public static SecretKey generateSecretAESKey(int keySize){
+        KeyGenerator generator = null;
+        try {
+            generator = KeyGenerator.getInstance("AES");
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+            return null;
+        }
+        // KEYSIZE is in bits
+        generator.init(keySize);
+        SecretKey key = generator.generateKey();
+        return key;
     }
 
 
