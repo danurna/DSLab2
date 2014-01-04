@@ -153,4 +153,8 @@ public interface IClientCli {
     
     @Command
     public MessageResponse readQuorum();
+    @Command
+    public MessageResponse writeQuorum();
+    @Command
+    public MessageResponse topThreeDownloads();
 }

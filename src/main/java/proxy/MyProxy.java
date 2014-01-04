@@ -22,6 +22,7 @@ import java.net.Socket;
 import java.security.PrivateKey;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.concurrent.*;
 
@@ -38,6 +39,7 @@ public class MyProxy {
     private Config config;
     private ConcurrentHashMap<String, UserEntity> userMap;
     private ConcurrentHashMap<String, FileserverEntity> fileserverMap;
+    private ConcurrentHashMap<String, Integer> fileDownloadCountMap;
     private Collection<Object> activeSockets;
     private PrivateKey privateKey;
     //Config values
@@ -75,6 +77,7 @@ public class MyProxy {
         executor = Executors.newCachedThreadPool();
         activeSockets = new ArrayList<Object>();
         fileserverMap = new ConcurrentHashMap<String, FileserverEntity>();
+        fileDownloadCountMap = new ConcurrentHashMap<String, Integer>();
         privateKey = this.readPrivateKey(privateKeyPath);
         if(privateKey == null){
             return;
@@ -476,5 +479,46 @@ public class MyProxy {
 
     protected byte[] getPublicKey() {
     	return proxyPublicKey;
+    }
+    
+    protected void registerDownload(String fileName) {
+    	Integer ct = fileDownloadCountMap.get(fileName);
+    	if (ct==null) {ct=0;}
+    	fileDownloadCountMap.put(fileName, ++ct);
+    }
+    
+    protected String[] getTop3DownloadedFiles() {
+    	String lowest[] = {"None","None","None"};
+    	int lowestVal[] = {Integer.MAX_VALUE,Integer.MAX_VALUE,Integer.MAX_VALUE};
+    	for (Entry<String,Integer> e : fileDownloadCountMap.entrySet()) {
+    		if (e.getValue()<lowestVal[0]) {
+    			lowestVal[2] = lowestVal[1];
+    			lowestVal[1] = lowestVal[0];
+    			lowestVal[0] = e.getValue();
+    			lowest[2] = lowest[1];
+    			lowest[1] = lowest[0];
+    			lowest[0] = e.getKey();
+    		} else if (e.getValue()<lowestVal[1]) {
+    			lowestVal[2] = lowestVal[1];
+    			lowestVal[1] = e.getValue();
+    			lowest[2] = lowest[1];
+    			lowest[1] = e.getKey();
+    		} else if (e.getValue()<lowestVal[2]) {
+    			lowestVal[2] = e.getValue();
+    			lowest[2] = e.getKey();
+    		}
+    	}
+    	for (int i=0;i<3;i++) {
+    		if (lowestVal[i]!=Integer.MAX_VALUE) {
+    			lowest[i] = "\n"+(i+1)+".\t"+lowest[i]+"\t"+lowestVal[i];
+    		} else {
+    			lowest[i] = "";
+    		}
+    	}
+    	return lowest;
+    }
+    
+    protected ProxyManagementComponent getProxyManagementComponent() {
+    	return pmc;
     }
 }

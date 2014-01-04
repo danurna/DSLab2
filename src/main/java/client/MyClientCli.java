@@ -22,10 +22,13 @@ import java.util.Collection;
 public class MyClientCli implements IClientCli {
     private MyClient client;
     boolean loggedIn;
+    
+    private Thread shellThread;
 
-    public MyClientCli(MyClient client) {
+    public MyClientCli(MyClient client, Thread shellThread) {
         this.client = client;
         loggedIn = false;
+        this.shellThread = shellThread;
     }
 
     @Override
@@ -119,6 +122,9 @@ public class MyClientCli implements IClientCli {
     @Override
     @Command
     public MessageResponse exit() throws IOException {
+    	shellThread.interrupt();
+    	client.unexportUnicasts();
+    	
         if (client.isConnected()) {
             logout();
             client.closeConnection();
@@ -143,6 +149,22 @@ public class MyClientCli implements IClientCli {
     public MessageResponse writeQuorum() {
     	try {
 	    	return new MessageResponse("Write-Quorum is set to "+client.getProxyRMI().getWriteQuorumSize()+".");
+		} catch (RemoteException e) {
+			e.printStackTrace();
+			return new MessageResponse("A connection error occured. Please try again later.");
+		}
+    	
+    }
+    
+    @Command
+    public MessageResponse topThreeDownloads() {
+    	try {
+    		String out = "Top Three Downloads:";
+    		String[] files = client.getProxyRMI().getTop3DownloadedFiles();
+    		for (int i=0;i<3;i++) {
+    			out+=files[i];
+    		}
+	    	return new MessageResponse(out);
 		} catch (RemoteException e) {
 			e.printStackTrace();
 			return new MessageResponse("A connection error occured. Please try again later.");

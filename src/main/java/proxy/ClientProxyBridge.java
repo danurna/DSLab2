@@ -101,11 +101,11 @@ public class ClientProxyBridge implements IProxy, Runnable {
         }
         String filename = request.getFilename();
         FileserverRequest fileserverRequest = myProxy.getLeastUsedFileserverForFile(filename,myProxy.getReadQuorum() , this);
-
+        
         if (fileserverRequest == null) { //no fs available
             return new MessageResponse("No fileservers available for requested file.");
         }
-
+        
         if (fileserverRequest.getFileserverEntity() == null) { //no fs with file
             return fileserverRequest.getResponse();
         }
@@ -119,6 +119,7 @@ public class ClientProxyBridge implements IProxy, Runnable {
             currentUser.decreaseCredits(infoResponse.getSize());
             fs.increaseUsage(infoResponse.getSize());
             String checksum = ChecksumUtils.generateChecksum(currentUser.getName(), filename, 0, infoResponse.getSize());
+            myProxy.registerDownload(filename);
             return new DownloadTicketResponse(new DownloadTicket(currentUser.getName(), request.getFilename(), checksum, fs.getAddress(), fs.getPort()));
         }
 

@@ -18,6 +18,7 @@ import util.MyUtils;
 import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.rmi.NoSuchObjectException;
 import java.rmi.NotBoundException;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
@@ -313,48 +314,6 @@ public class MyClient {
         return connected;
     }
 
-    private boolean authenticateForLoginRequest(LoginRequest request){
-        clientPrivateKey = this.readPrivateKey(keysDir+"/"+request.getUsername()+".pem");
-        if(clientPrivateKey == null){
-            return false;
-        }
-
-        //Send login with username and challenge etc.
-        byte[] encodedRandomNumber = MyUtils.base64encodeBytes(MyUtils.generateSecureRandomNumber(32));
-        ClientChallengeRequest clientChallengeRequest = new ClientChallengeRequest(request.getUsername(), encodedRandomNumber);
-        try {
-            System.out.println("Raw object " + clientChallengeRequest);
-            Cipher cipher = Cipher.getInstance("RSA/NONE/OAEPWithSHA256AndMGF1Padding");
-            cipher.init(Cipher.ENCRYPT_MODE, proxyPubKey);
-
-            SealedObject sealedObject = new SealedObject(clientChallengeRequest, cipher);
-            System.out.println("Sealed object " + sealedObject);
-
- /*           try {
-                out.writeObject(sealedObject);
-                out.flush();
-
-                Object object = in.readObject();
-
-            } catch (IOException e) {
-                this.closeConnection();
-                System.out.println("Error sending request. Connections closed.");
-            } catch (ClassNotFoundException e) {
-                //Shouldn't occur.
-            }*/
-
-
-            Cipher dec  = Cipher.getInstance("RSA/NONE/OAEPWithSHA256AndMGF1Padding");
-            //dec.init(Cipher.DECRYPT_MODE, clientPrivateKey);
-            dec.init(Cipher.DECRYPT_MODE, MyUtils.getPrivateKeyForPathAndPassword("keys/proxy.pem", "12345"));
-            System.out.println("Unsealed object " + sealedObject.getObject(dec));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return true;
-    }
-
     private PrivateKey readPrivateKey(String path){
         PrivateKey ret = null;
         try {
@@ -375,10 +334,10 @@ public class MyClient {
     }
 
 
-    public byte[] serialize(Object obj) throws IOException {
-        ByteArrayOutputStream b = new ByteArrayOutputStream();
-        ObjectOutputStream o = new ObjectOutputStream(b);
-        o.writeObject(obj);
-        return b.toByteArray();
+    protected void unexportUnicasts() {
+    	try {
+			UnicastRemoteObject.unexportObject(dlsCallback, true);
+		} catch (NoSuchObjectException e) {}
+
     }
 }
