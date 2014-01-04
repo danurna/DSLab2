@@ -2,14 +2,17 @@ package model;
 
 import util.MyUtils;
 
+import java.io.Serializable;
 import java.net.InetAddress;
 import java.sql.Timestamp;
 
 /**
  * Extended Fileserver model because FileServerInfo doesn't cover the demands.
  */
-public class FileserverEntity {
-    private InetAddress address;
+public class FileserverEntity implements Serializable {
+	private static final long serialVersionUID = 4007480258501807250L;
+	
+	private InetAddress address;
     private int port;
     private long usage;
     //Volatile because variable has no connection to any other variable nor do

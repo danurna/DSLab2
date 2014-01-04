@@ -1,15 +1,17 @@
 package proxy;
 
 import java.rmi.Remote;
+import java.rmi.RemoteException;
 import java.util.Collection;
 
+import client.IStringCallback;
 import model.FileserverEntity;
 
 public interface IProxyRMI extends Remote {
-	Collection<FileserverEntity> getReadQuorum();
-	Collection<FileserverEntity> getWriteQuorum();
-	Collection<FileEntity> getTop3DownloadedFiles();
-	void subscribeToFile(String fileName, IStringCallback callback);
-	byte[] getProxyPublicKey();
-	byte[] setClientPublicKey();
+	int getReadQuorumSize() throws RemoteException;
+	int getWriteQuorumSize() throws RemoteException;
+	Collection<FileEntity> getTop3DownloadedFiles() throws RemoteException;
+	void subscribeToFile(String fileName, IStringCallback callback) throws RemoteException;
+	byte[] getProxyPublicKey() throws RemoteException;
+	void setClientPublicKey(String user, byte[] key) throws RemoteException;
 }

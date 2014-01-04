@@ -16,8 +16,16 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.rmi.NotBoundException;
+import java.rmi.Remote;
+import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
+import java.rmi.server.UnicastRemoteObject;
 import java.util.HashMap;
 import java.util.Set;
+
+import proxy.IProxyRMI;
 
 /**
  * My client class maintains connection to proxy
@@ -32,13 +40,32 @@ public class MyClient {
     private String clDir;
     private HashMap<String, Integer> versionMap;
     private boolean connected;
+    
+	private String rmiBindingName;
+	private int proxyRMIPort;
+	private String proxyRMIAddress;
+	private String keysDir;
+	
+	private Registry remoteRegistry;
+	private IProxyRMI proxyRMI;
+	private DownloadSubscriptionCallback dlsCallback;
 
-    public MyClient(Config config) {
+    public MyClient(Config config, Config mcConfig) {
         if (!this.readConfigFile(config)) {
             //If reading config fails, we fail too.
             return;
         }
-
+        try {
+			if (!this.readMCConfigFile(mcConfig)) {
+			    //If reading config fails, we fail too.
+			    return;
+			}
+		} catch (RemoteException e) {
+			return;
+		} catch (NotBoundException e) {
+			return;
+		}
+        
         connected = false;
         versionMap = new HashMap<String, Integer>();
         this.initVersionsMap();
@@ -52,7 +79,14 @@ public class MyClient {
             e.printStackTrace();
         }
     }
-
+    
+    public Registry getRemoteRegistry() {
+    	return remoteRegistry;
+    }
+    public IProxyRMI getProxyRMI() {
+    	return proxyRMI;
+    }
+    
     //Setup connection to proxy and return whether it was successful or not.
     //Called on first request.
     public boolean connectToProxy() {
@@ -86,6 +120,45 @@ public class MyClient {
         if (dir == null || !dir.isDirectory()) {
             System.err.println("Directory path given in properties file has to contain a directory!");
             return false;
+        }
+
+        return true;
+    }
+    
+    /**
+     * Reads config values.
+     *
+     * @return true, if values are valid and existing. False, on resource not found or parse exception.
+     * @throws RemoteException 
+     * @throws NotBoundException 
+     */
+    private boolean readMCConfigFile(Config config) throws RemoteException, NotBoundException {
+        try {
+            rmiBindingName = config.getString("binding.name");
+            proxyRMIAddress = config.getString("proxy.host");
+            proxyRMIPort = config.getInt("proxy.rmi.port");
+            keysDir = config.getString("keys.dir");
+        } catch (Exception e) {
+        	System.err.println("Something went wrong on reading mc properties.\n" +
+                    "Please provide information like this:\nKey=YourRealValue \nbinding.name=myBindingName\n" +
+                    "proxy.host=localhost\nproxy.rmi.port=12345\nkeys.dir=keys");
+            return false;
+        }
+
+        File dir = new File(keysDir);
+        if (dir == null || !dir.isDirectory()) {
+            System.err.println("Directory path given in properties file has to contain a directory!");
+            return false;
+        }
+        
+        remoteRegistry = LocateRegistry.getRegistry(proxyRMIAddress,proxyRMIPort);
+        Remote tmp = remoteRegistry.lookup(rmiBindingName);
+        if (tmp instanceof IProxyRMI) {
+        	proxyRMI = (IProxyRMI) tmp;
+        	dlsCallback = new DownloadSubscriptionCallback(this);
+        	UnicastRemoteObject.exportObject(dlsCallback, 0);
+        } else {
+        	return false;
         }
 
         return true;

@@ -150,4 +150,7 @@ public interface IClientCli {
 	 */
     @Command
 	MessageResponse exit() throws IOException;
+    
+    @Command
+    public MessageResponse readQuorum();
 }

@@ -47,6 +47,8 @@ public class MyProxy {
     private String privateKeyPath;
     private String hmacKeyPath;
     private String keysDir;
+    private byte[] proxyPublicKey;
+	private ProxyManagementComponent pmc;
 
     public static void main(String[] args) {
         try {
@@ -80,7 +82,11 @@ public class MyProxy {
         this.createSockets();
         this.createFileserverGC();
     }
-
+    
+    public void setProxyManagementComponent(ProxyManagementComponent pmc) {
+    	this.pmc = pmc;
+    }
+    
     /**
      * Reads config values.
      *
@@ -358,12 +364,13 @@ public class MyProxy {
     /**
      * Searches for least used, online Fileserver having the file for given filename.
      *
+     *
      * @param filename - Filename of file, we are searching a fileserver for.
-     * @param bridge   - Bridge to be used to send fileserver request.
-     * @return FileserverRequest with Response and FileserverEntity, if server found. Null, if no fs at all. FileserverRequest w/o FileserverEntity, if file not available.
+     * @param nr
+     *@param bridge   - Bridge to be used to send fileserver request.  @return FileserverRequest with Response and FileserverEntity, if server found. Null, if no fs at all. FileserverRequest w/o FileserverEntity, if file not available.
      */
-    public FileserverRequest getLeastUsedFileserverForFile(String filename, ClientProxyBridge bridge) {
-        Collection<FileserverEntity> list = fileserverMap.values();
+    public FileserverRequest getLeastUsedFileserverForFile(String filename, Collection<FileserverEntity> nr, ClientProxyBridge bridge) {
+        Collection<FileserverEntity> list = nr;
 
         FileserverEntity fs = getLeastUsedFileserverFromList(list);
 
@@ -397,7 +404,7 @@ public class MyProxy {
         if (nR){
             quorum = ((int) Math.floor(fileserverMap.size() / 2.0))+1;
         }else{
-            quorum = ((int) Math.ceil(fileserverMap.size() / 2.0))+1;
+            quorum = Math.max(((int) Math.ceil(fileserverMap.size() / 2.0))+1,fileserverMap.size());
         }
         int counter = 0;
         Collection<FileserverEntity> list = fileserverMap.values();
@@ -419,11 +426,16 @@ public class MyProxy {
         }
         return quorumlist;
     }
-    public Collection<FileserverEntity> getNR(){
+    public int getNR() {
+    	return ((int) Math.floor(fileserverMap.size() / 2.0))+1;
+    }
+    public Collection<FileserverEntity> getReadQuorum(){
         return getQuorum(true);
     }
-
-    public Collection<FileserverEntity> getNW(){
+    public int getNW() {
+    	return Math.max(((int) Math.ceil(fileserverMap.size() / 2.0))+1,fileserverMap.size());
+    }
+    public Collection<FileserverEntity> getWriteQuorum(){
         return getQuorum(false);
     }
 
@@ -458,4 +470,7 @@ public class MyProxy {
         return ret;
     }
 
+    protected byte[] getPublicKey() {
+    	return proxyPublicKey;
+    }
 }
