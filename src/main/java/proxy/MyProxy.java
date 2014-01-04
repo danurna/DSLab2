@@ -20,7 +20,9 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.*;
 
 /**
@@ -36,6 +38,7 @@ public class MyProxy {
     private Config config;
     private ConcurrentHashMap<String, UserEntity> userMap;
     private ConcurrentHashMap<String, FileserverEntity> fileserverMap;
+    private ConcurrentHashMap<String, Integer> fileDownloadCountMap;
     private Collection<Object> activeSockets;
     //Config values
     private int tcpPort;
@@ -71,6 +74,7 @@ public class MyProxy {
         executor = Executors.newCachedThreadPool();
         activeSockets = new ArrayList<Object>();
         fileserverMap = new ConcurrentHashMap<String, FileserverEntity>();
+        fileDownloadCountMap = new ConcurrentHashMap<String, Integer>();
         this.createSockets();
         this.createFileserverGC();
     }
@@ -448,5 +452,37 @@ public class MyProxy {
     
     protected byte[] getPublicKey() {
     	return proxyPublicKey;
+    }
+    
+    protected void registerDownload(String fileName) {
+    	Integer ct = fileDownloadCountMap.get(fileName);
+    	if (ct==null) {ct=0;}
+    	fileDownloadCountMap.put(fileName, ++ct);
+    }
+    
+    protected String[] getTop3DownloadedFiles() {
+    	String lowest[] = {"None","None","None"};
+    	int lowestVal[] = {Integer.MAX_VALUE,Integer.MAX_VALUE,Integer.MAX_VALUE};
+    	for (Entry<String,Integer> e : fileDownloadCountMap.entrySet()) {
+    		for (int i=0;i<3;i++) {
+    			if (e.getValue()<lowestVal[i]) {
+    				for (int j=i+1;j<3;j++) {
+    					lowest[j] = lowest[j-1];
+    					lowestVal[j] = lowestVal[j];
+    				}
+    				lowest[i] = e.getKey();
+    				lowestVal[i] = e.getValue();
+    				i=3;
+    			}
+    		}
+    	}
+    	for (int i=0;i<3;i++) {
+    		if (lowestVal[i]!=Integer.MAX_VALUE) {
+    			lowest[i] = "\n"+(i+1)+".\t"+lowest[i]+"\t"+lowestVal[i];
+    		} else {
+    			lowest[i] = "";
+    		}
+    	}
+    	return lowest;
     }
 }

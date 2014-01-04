@@ -25,9 +25,8 @@ public class ProxyRMI implements IProxyRMI {
 	}
 
 	@Override
-	public Collection<FileEntity> getTop3DownloadedFiles() throws RemoteException {
-		// TODO Auto-generated method stub
-		return null;
+	public String[] getTop3DownloadedFiles() throws RemoteException {
+		return pmc.getProxy().getTop3DownloadedFiles();
 	}
 
 	@Override

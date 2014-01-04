@@ -149,6 +149,22 @@ public class MyClientCli implements IClientCli {
 		}
     	
     }
+    
+    @Command
+    public MessageResponse topThreeDownloads() {
+    	try {
+    		String out = "Top Three Downloads:";
+    		String[] files = client.getProxyRMI().getTop3DownloadedFiles();
+    		for (int i=0;i<3;i++) {
+    			out+=files[i];
+    		}
+	    	return new MessageResponse(out);
+		} catch (RemoteException e) {
+			e.printStackTrace();
+			return new MessageResponse("A connection error occured. Please try again later.");
+		}
+    	
+    }
 
     //Private helper that tries to connect, if not already connected.
     private boolean isConnected() {
