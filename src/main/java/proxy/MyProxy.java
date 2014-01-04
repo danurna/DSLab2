@@ -74,7 +74,7 @@ public class MyProxy {
         executor = Executors.newCachedThreadPool();
         activeSockets = new ArrayList<Object>();
         fileserverMap = new ConcurrentHashMap<String, FileserverEntity>();
-        privateKey = this.readPrivateKey();
+        privateKey = this.readPrivateKey(privateKeyPath);
         if(privateKey == null){
             return;
         }
@@ -457,10 +457,12 @@ public class MyProxy {
         return false;
     }
 
-    private PrivateKey readPrivateKey(){
+    private PrivateKey readPrivateKey(String path){
         PrivateKey ret = null;
         try {
-            ret = MyUtils.getPrivateKeyForPath(privateKeyPath);
+            //TODO: Change to productive code for Abgabe.
+            //ret = MyUtils.getPrivateKeyForPath(path);
+            ret = MyUtils.getPrivateKeyForPathAndPassword(path, "12345");
         } catch (IOException e) {
             e.printStackTrace();
             //Wrong usage or file does not exist.

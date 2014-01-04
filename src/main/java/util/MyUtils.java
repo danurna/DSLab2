@@ -156,6 +156,27 @@ public class MyUtils {
         return privateKey;
     }
 
+    /**
+     * Read PEM formatted RSA private key. Development only!
+     * @param path - Path to pem file
+     * @param password - to prevent always typing the password we use this convenience param
+     * @return private key
+     * @throws IOException
+     */
+    public static PrivateKey getPrivateKeyForPathAndPassword(String path, final String password) throws IOException {
+
+        PEMReader in = new PEMReader(new FileReader(path), new PasswordFinder() {
+            @Override
+            public char[] getPassword() {
+                return password.toCharArray();
+            }
+        });
+
+        KeyPair keyPair = (KeyPair) in.readObject();
+        PrivateKey privateKey = keyPair.getPrivate();
+        return privateKey;
+    }
+
 
 
 }
