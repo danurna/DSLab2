@@ -77,7 +77,8 @@ public class SimpleTest {
         assertTrue(String.format("Response must contain '%s' but was '%s'", expected, actual), actual.contains(expected));
 
         actual = client.upload("upload.txt").toString();
-        expected = "Uploaded files";
+
+        expected = "Uploaded files successful!";
         assertTrue(String.format("Response must contain '%s' but was '%s'", expected, actual), actual.contains(expected));
 
         actual = client.credits().toString();

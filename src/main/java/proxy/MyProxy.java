@@ -18,11 +18,10 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.security.PrivateKey;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Map.Entry;
 import java.util.Properties;
-import java.util.Set;
 import java.util.concurrent.*;
 
 /**
@@ -38,16 +37,17 @@ public class MyProxy {
     private Config config;
     private ConcurrentHashMap<String, UserEntity> userMap;
     private ConcurrentHashMap<String, FileserverEntity> fileserverMap;
-    private ConcurrentHashMap<String, Integer> fileDownloadCountMap;
     private Collection<Object> activeSockets;
+    private PrivateKey privateKey;
     //Config values
     private int tcpPort;
     private int udpPort;
     private int fsTimeout;
     private int fsPeriod;
-    
+    private String privateKeyPath;
+    private String hmacKeyPath;
+    private String keysDir;
     private byte[] proxyPublicKey;
-    
 	private ProxyManagementComponent pmc;
 
     public static void main(String[] args) {
@@ -74,7 +74,11 @@ public class MyProxy {
         executor = Executors.newCachedThreadPool();
         activeSockets = new ArrayList<Object>();
         fileserverMap = new ConcurrentHashMap<String, FileserverEntity>();
-        fileDownloadCountMap = new ConcurrentHashMap<String, Integer>();
+        privateKey = this.readPrivateKey(privateKeyPath);
+        if(privateKey == null){
+            return;
+        }
+
         this.createSockets();
         this.createFileserverGC();
     }
@@ -94,6 +98,9 @@ public class MyProxy {
             udpPort = config.getInt("udp.port");
             fsPeriod = config.getInt("fileserver.checkPeriod");
             fsTimeout = config.getInt("fileserver.timeout");
+            privateKeyPath = config.getString("key");
+            hmacKeyPath = config.getString("hmac.key");
+            keysDir = config.getString("keys.dir");
         } catch (Exception e) {
             System.err.println("Something went wrong on reading Proxy properties.\n" +
                     "Please provide information like this:\nKey=YourRealValue \ntcp.port=12345\n" +
@@ -449,40 +456,23 @@ public class MyProxy {
 
         return false;
     }
-    
+
+    private PrivateKey readPrivateKey(String path){
+        PrivateKey ret = null;
+        try {
+            //TODO: Change to productive code for Abgabe.
+            //ret = MyUtils.getPrivateKeyForPath(path);
+            ret = MyUtils.getPrivateKeyForPathAndPassword(path, "12345");
+        } catch (IOException e) {
+            e.printStackTrace();
+            //Wrong usage or file does not exist.
+            System.err.println("Something went wrong on reading proxy's private key.\n");
+            return null;
+        }
+        return ret;
+    }
+
     protected byte[] getPublicKey() {
     	return proxyPublicKey;
-    }
-    
-    protected void registerDownload(String fileName) {
-    	Integer ct = fileDownloadCountMap.get(fileName);
-    	if (ct==null) {ct=0;}
-    	fileDownloadCountMap.put(fileName, ++ct);
-    }
-    
-    protected String[] getTop3DownloadedFiles() {
-    	String lowest[] = {"None","None","None"};
-    	int lowestVal[] = {Integer.MAX_VALUE,Integer.MAX_VALUE,Integer.MAX_VALUE};
-    	for (Entry<String,Integer> e : fileDownloadCountMap.entrySet()) {
-    		for (int i=0;i<3;i++) {
-    			if (e.getValue()<lowestVal[i]) {
-    				for (int j=i+1;j<3;j++) {
-    					lowest[j] = lowest[j-1];
-    					lowestVal[j] = lowestVal[j];
-    				}
-    				lowest[i] = e.getKey();
-    				lowestVal[i] = e.getValue();
-    				i=3;
-    			}
-    		}
-    	}
-    	for (int i=0;i<3;i++) {
-    		if (lowestVal[i]!=Integer.MAX_VALUE) {
-    			lowest[i] = "\n"+(i+1)+".\t"+lowest[i]+"\t"+lowestVal[i];
-    		} else {
-    			lowest[i] = "";
-    		}
-    	}
-    	return lowest;
     }
 }
