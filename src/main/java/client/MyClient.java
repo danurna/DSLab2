@@ -4,16 +4,18 @@ import cli.Shell;
 import message.Request;
 import message.Response;
 import message.request.DownloadFileRequest;
+import message.request.LoginRequest;
+import message.request.ClientChallengeRequest;
 import message.response.DownloadFileResponse;
 import message.response.DownloadTicketResponse;
+import message.response.MessageResponse;
+import proxy.RSAChannelEncryption;
+import proxy.TCPChannel;
 import util.ComponentFactory;
 import util.Config;
 import util.MyUtils;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.rmi.NotBoundException;
@@ -22,10 +24,15 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
+import java.security.*;
 import java.util.HashMap;
 import java.util.Set;
 
 import proxy.IProxyRMI;
+
+import javax.crypto.Cipher;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.SealedObject;
 
 /**
  * My client class maintains connection to proxy
@@ -33,8 +40,8 @@ import proxy.IProxyRMI;
  */
 public class MyClient {
     private Socket socket;
-    private ObjectOutputStream out;
-    private ObjectInputStream in;
+    private TCPChannel originalTcpChannel;
+    private TCPChannel tcpChannel;
     private String proxyAddress;
     private int tcpPort;
     private String clDir;
@@ -45,7 +52,10 @@ public class MyClient {
 	private int proxyRMIPort;
 	private String proxyRMIAddress;
 	private String keysDir;
-	
+    private String proxyPubKeyPath;
+    private PublicKey proxyPubKey;
+    private PrivateKey clientPrivateKey;
+
 	private Registry remoteRegistry;
 	private IProxyRMI proxyRMI;
 	private DownloadSubscriptionCallback dlsCallback;
@@ -55,17 +65,12 @@ public class MyClient {
             //If reading config fails, we fail too.
             return;
         }
-        try {
-			if (!this.readMCConfigFile(mcConfig)) {
-			    //If reading config fails, we fail too.
-			    return;
-			}
-		} catch (RemoteException e) {
-			return;
-		} catch (NotBoundException e) {
-			return;
-		}
-        
+
+        if (!this.readMCConfigFile(mcConfig)) {
+            //If reading config fails, we fail too.
+            return;
+        }
+
         connected = false;
         versionMap = new HashMap<String, Integer>();
         this.initVersionsMap();
@@ -109,6 +114,7 @@ public class MyClient {
             tcpPort = config.getInt("proxy.tcp.port");
             proxyAddress = config.getString("proxy.host");
             clDir = config.getString("download.dir");
+            proxyPubKeyPath = config.getString("proxy.key");
         } catch (Exception e) {
             System.err.println("Something went wrong on reading Client properties.\n" +
                     "Please provide information like this:\nKey=YourRealValue \nproxy.tcp.port=12345\n" +
@@ -122,6 +128,13 @@ public class MyClient {
             return false;
         }
 
+        try {
+            proxyPubKey =  MyUtils.getPublicKeyForPath(proxyPubKeyPath);
+        } catch (IOException e) {
+            System.err.println("Could not read proxy's public key.");
+            return false;
+        }
+
         return true;
     }
     
@@ -132,7 +145,7 @@ public class MyClient {
      * @throws RemoteException 
      * @throws NotBoundException 
      */
-    private boolean readMCConfigFile(Config config) throws RemoteException, NotBoundException {
+    private boolean readMCConfigFile(Config config) {
         try {
             rmiBindingName = config.getString("binding.name");
             proxyRMIAddress = config.getString("proxy.host");
@@ -150,15 +163,18 @@ public class MyClient {
             System.err.println("Directory path given in properties file has to contain a directory!");
             return false;
         }
-        
-        remoteRegistry = LocateRegistry.getRegistry(proxyRMIAddress,proxyRMIPort);
-        Remote tmp = remoteRegistry.lookup(rmiBindingName);
-        if (tmp instanceof IProxyRMI) {
-        	proxyRMI = (IProxyRMI) tmp;
-        	dlsCallback = new DownloadSubscriptionCallback(this);
-        	UnicastRemoteObject.exportObject(dlsCallback, 0);
-        } else {
-        	return false;
+        try{
+            remoteRegistry = LocateRegistry.getRegistry(proxyRMIAddress,proxyRMIPort);
+            Remote tmp = remoteRegistry.lookup(rmiBindingName);
+            if (tmp instanceof IProxyRMI) {
+                proxyRMI = (IProxyRMI) tmp;
+                dlsCallback = new DownloadSubscriptionCallback(this);
+                UnicastRemoteObject.exportObject(dlsCallback, 0);
+            } else {
+                return false;
+            }
+        } catch(Exception e){
+            return false;
         }
 
         return true;
@@ -182,8 +198,9 @@ public class MyClient {
     //Establish connection to proxy with object in- and outputstream.
     private void createSockets() throws IOException {
         socket = new Socket(proxyAddress, tcpPort);
-        out = new ObjectOutputStream(socket.getOutputStream());
-        in = new ObjectInputStream(socket.getInputStream());
+        tcpChannel = new TCPChannel();
+        tcpChannel.setStreamsForSocket(socket);
+        originalTcpChannel = tcpChannel;
     }
 
     /**
@@ -194,21 +211,29 @@ public class MyClient {
      */
     public Response sendRequest(Request request) {
         //If out socket not available, we can not send a request.
-        if (out == null) {
+        if (tcpChannel.getOut() == null) {
             return null;
         }
 
-        try {
-            out.writeObject(request);
-            out.flush();
+        //If login request, we need to authenticate first.
+        if(request instanceof LoginRequest){
+            clientPrivateKey = readPrivateKey(keysDir+"/"+((LoginRequest) request).getUsername()+".pem");
+            //tcpChannel = new RSAChannelEncryption(originalTcpChannel, clientPrivateKey, proxyPubKey);
+        }
 
-            Object object = in.readObject();
+        try {
+            tcpChannel.writeObject(request);
+
+            Object object = tcpChannel.readObject();
 
             if (object instanceof Response) {
                 return (Response) object;
             }
 
+        } catch(EOFException e){
+            e.printStackTrace();
         } catch (IOException e) {
+            e.printStackTrace();
             this.closeConnection();
             System.out.println("Error sending request. Connections closed.");
         } catch (ClassNotFoundException e) {
@@ -223,13 +248,12 @@ public class MyClient {
         connected = false;
 
         //If socket wasn't even opened, we don't need to close it.
-        if (out == null) {
+        if (tcpChannel.getOut() == null) {
             return;
         }
 
         try {
-            out.close();
-            in.close();
+            tcpChannel.close();
             socket.close();
         } catch (IOException e) {
             //Exceptions can occur here after losing connection
@@ -287,5 +311,74 @@ public class MyClient {
     //Indicates whether a connection to proxy is established or not.
     public boolean isConnected() {
         return connected;
+    }
+
+    private boolean authenticateForLoginRequest(LoginRequest request){
+        clientPrivateKey = this.readPrivateKey(keysDir+"/"+request.getUsername()+".pem");
+        if(clientPrivateKey == null){
+            return false;
+        }
+
+        //Send login with username and challenge etc.
+        byte[] encodedRandomNumber = MyUtils.base64encodeBytes(MyUtils.generateSecureRandomNumber(32));
+        ClientChallengeRequest clientChallengeRequest = new ClientChallengeRequest(request.getUsername(), encodedRandomNumber);
+        try {
+            System.out.println("Raw object " + clientChallengeRequest);
+            Cipher cipher = Cipher.getInstance("RSA/NONE/OAEPWithSHA256AndMGF1Padding");
+            cipher.init(Cipher.ENCRYPT_MODE, proxyPubKey);
+
+            SealedObject sealedObject = new SealedObject(clientChallengeRequest, cipher);
+            System.out.println("Sealed object " + sealedObject);
+
+ /*           try {
+                out.writeObject(sealedObject);
+                out.flush();
+
+                Object object = in.readObject();
+
+            } catch (IOException e) {
+                this.closeConnection();
+                System.out.println("Error sending request. Connections closed.");
+            } catch (ClassNotFoundException e) {
+                //Shouldn't occur.
+            }*/
+
+
+            Cipher dec  = Cipher.getInstance("RSA/NONE/OAEPWithSHA256AndMGF1Padding");
+            //dec.init(Cipher.DECRYPT_MODE, clientPrivateKey);
+            dec.init(Cipher.DECRYPT_MODE, MyUtils.getPrivateKeyForPathAndPassword("keys/proxy.pem", "12345"));
+            System.out.println("Unsealed object " + sealedObject.getObject(dec));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return true;
+    }
+
+    private PrivateKey readPrivateKey(String path){
+        PrivateKey ret = null;
+        try {
+            //TODO: Change to productive code for Abgabe.
+            //ret = MyUtils.getPrivateKeyForPath(path);
+            String pw = "12345";
+            if(path.equals("keys/bill.pem")){
+                pw = "23456";
+            }
+            ret = MyUtils.getPrivateKeyForPathAndPassword(path, pw);
+        } catch (IOException e) {
+            //e.printStackTrace();
+            //Wrong usage or file does not exist.
+            System.err.println("Something went wrong on reading user's private key.\n");
+            return null;
+        }
+        return ret;
+    }
+
+
+    public byte[] serialize(Object obj) throws IOException {
+        ByteArrayOutputStream b = new ByteArrayOutputStream();
+        ObjectOutputStream o = new ObjectOutputStream(b);
+        o.writeObject(obj);
+        return b.toByteArray();
     }
 }

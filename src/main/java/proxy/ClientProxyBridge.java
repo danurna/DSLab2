@@ -16,6 +16,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.SocketException;
+import java.security.PrivateKey;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -27,6 +28,7 @@ public class ClientProxyBridge implements IProxy, Runnable {
     private Socket clientSocket;
     private UserEntity currentUser;
     private MyProxy myProxy;
+    private PrivateKey privateKey;
 
     public ClientProxyBridge(Socket clientSocket, MyProxy myProxy) {
         this.clientSocket = clientSocket;
@@ -168,22 +170,20 @@ public class ClientProxyBridge implements IProxy, Runnable {
 
     @Override
     public void run() {
-        ObjectOutputStream objectOut = null;
-        ObjectInputStream objectIn = null;
+        TCPChannel channel = new TCPChannel();
+        //channel = new RSAChannelEncryption(channel, privateKey, null);
 
         try {
-            objectOut = new ObjectOutputStream(clientSocket.getOutputStream());
-            objectIn = new ObjectInputStream(clientSocket.getInputStream());
+            channel.setStreamsForSocket(clientSocket);
 
             Object obj;
-            while ((obj = objectIn.readObject()) != null && !Thread.currentThread().isInterrupted()) {
+            while ((obj = channel.readObject()) != null && !Thread.currentThread().isInterrupted()) {
                 Response response = performRequest(obj);
 
                 if (response == null)
                     return;
 
-                objectOut.writeObject(response);
-                objectOut.flush();
+                channel.writeObject(response);
             }
 
         } catch (EOFException e) {
@@ -197,8 +197,7 @@ public class ClientProxyBridge implements IProxy, Runnable {
         } finally {
             //Cleanup
             try {
-                objectIn.close();
-                objectOut.close();
+                channel.close();
                 clientSocket.close();
             } catch (IOException e) {
                 //Maybe it is already closed.
@@ -242,7 +241,6 @@ public class ClientProxyBridge implements IProxy, Runnable {
 
         return response;
     }
-
 
     //Handles Socket exception from private method and provides functionality to external classes.
     public Response performFileserverRequestWrapper(Request request, FileserverEntity entity) {
@@ -288,4 +286,7 @@ public class ClientProxyBridge implements IProxy, Runnable {
     }
 
 
+    public void setPrivateKey(PrivateKey privateKey){
+        this.privateKey = privateKey;
+    }
 }

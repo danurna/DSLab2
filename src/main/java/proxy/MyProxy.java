@@ -1,5 +1,6 @@
 package proxy;
 
+import cli.AuthenticatedSocket;
 import cli.Shell;
 import message.Response;
 import message.request.InfoRequest;
@@ -288,6 +289,7 @@ public class MyProxy {
      */
     public void handleClient(final Socket clientSocket) {
         ClientProxyBridge clientProxyBridge = new ClientProxyBridge(clientSocket, this);
+        clientProxyBridge.setPrivateKey(privateKey);
         executor.execute(clientProxyBridge);
     }
 
