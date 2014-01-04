@@ -20,10 +20,12 @@ import java.util.List;
  */
 public class MyProxyCli implements IProxyCli {
     MyProxy realProxy;
-
-
-    public MyProxyCli(MyProxy realProxy) {
+    
+    private Thread shellThread;
+    
+    public MyProxyCli(MyProxy realProxy, Thread shellThread) {
         this.realProxy = realProxy;
+        this.shellThread = shellThread;
     }
 
     @Override
@@ -51,7 +53,9 @@ public class MyProxyCli implements IProxyCli {
     @Override
     @Command
     public MessageResponse exit() throws IOException {
+    	shellThread.interrupt();
         realProxy.closeConnections();
+        realProxy.getProxyManagementComponent().unexportUnicasts();
         return null;
     }
 

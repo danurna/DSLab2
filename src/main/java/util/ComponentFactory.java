@@ -29,9 +29,10 @@ public class ComponentFactory {
      */
     public IClientCli startClient(Config config, Shell shell) throws Exception {
         System.out.println("startClient");
-        IClientCli clientCli = new MyClientCli(new MyClient(config, new Config("mc")));
+        Thread shellThread = new Thread(shell);
+        IClientCli clientCli = new MyClientCli(new MyClient(config, new Config("mc")),shellThread);
         shell.register(clientCli);
-        new Thread(shell).start();
+        shellThread.start();
 
         return clientCli;
     }
@@ -46,14 +47,15 @@ public class ComponentFactory {
      */
     public IProxyCli startProxy(Config config, Shell shell) throws Exception {
         System.out.println("startProxy");
+        Thread shellThread = new Thread(shell);
         MyProxy myProxy = new MyProxy(config);
-        IProxyCli proxyCli = new MyProxyCli(myProxy);
+        IProxyCli proxyCli = new MyProxyCli(myProxy,shellThread);
         ProxyManagementComponent pmc = 
         		new ProxyManagementComponent(new Config("mc"), myProxy);
         myProxy.setProxyManagementComponent(pmc);
         
         shell.register(proxyCli);
-        new Thread(shell).start();
+        shellThread.start();
 
         return proxyCli;
     }
@@ -68,9 +70,10 @@ public class ComponentFactory {
      */
     public IFileServerCli startFileServer(Config config, Shell shell) throws Exception {
         System.out.println("startFileServer");
-        IFileServerCli fileServerCli = new MyFileServerCli(new MyFileServer(config));
+        Thread shellThread = new Thread(shell);
+        IFileServerCli fileServerCli = new MyFileServerCli(new MyFileServer(config),shellThread);
         shell.register(fileServerCli);
-        new Thread(shell).start();
+        shellThread.start();
 
         return fileServerCli;
     }

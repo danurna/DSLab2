@@ -4,6 +4,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.rmi.AccessException;
+import java.rmi.NoSuchObjectException;
+import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -84,6 +87,21 @@ public class ProxyManagementComponent {
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		}
+    }
+    
+    protected void unexportUnicasts() {
+    	try {
+    		registry.unbind(bindingName);
+			UnicastRemoteObject.unexportObject(proxyRMI, true);
+		} catch (NoSuchObjectException e) {
+			
+		} catch (AccessException e) {
+			
+		} catch (RemoteException e) {
+			
+		} catch (NotBoundException e) {
+			
 		}
     }
 }

@@ -16,6 +16,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.rmi.NoSuchObjectException;
 import java.rmi.NotBoundException;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
@@ -287,5 +288,11 @@ public class MyClient {
     //Indicates whether a connection to proxy is established or not.
     public boolean isConnected() {
         return connected;
+    }
+    
+    protected void unexportUnicasts() {
+    	try {
+			UnicastRemoteObject.unexportObject(dlsCallback, true);
+		} catch (NoSuchObjectException e) {}
     }
 }

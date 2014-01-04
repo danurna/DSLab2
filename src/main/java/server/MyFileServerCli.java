@@ -11,14 +11,18 @@ import java.io.IOException;
  */
 public class MyFileServerCli implements IFileServerCli {
     private MyFileServer server;
-
-    public MyFileServerCli(MyFileServer server) {
+    
+    private Thread shellThread;
+    
+    public MyFileServerCli(MyFileServer server, Thread shellThread) {
         this.server = server;
+        this.shellThread = shellThread;
     }
 
     @Override
     @Command
     public MessageResponse exit() throws IOException {
+    	shellThread.interrupt();
         server.closeConnections();
         return new MessageResponse("Bye!");
     }

@@ -21,10 +21,8 @@ import java.net.Socket;
 import java.security.PrivateKey;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Hashtable;
 import java.util.Map.Entry;
 import java.util.Properties;
-import java.util.Set;
 import java.util.concurrent.*;
 
 /**
@@ -516,5 +514,9 @@ public class MyProxy {
     		}
     	}
     	return lowest;
+    }
+    
+    protected ProxyManagementComponent getProxyManagementComponent() {
+    	return pmc;
     }
 }

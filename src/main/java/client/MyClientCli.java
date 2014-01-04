@@ -22,10 +22,13 @@ import java.util.Collection;
 public class MyClientCli implements IClientCli {
     private MyClient client;
     boolean loggedIn;
+    
+    private Thread shellThread;
 
-    public MyClientCli(MyClient client) {
+    public MyClientCli(MyClient client, Thread shellThread) {
         this.client = client;
         loggedIn = false;
+        this.shellThread = shellThread;
     }
 
     @Override
@@ -119,6 +122,9 @@ public class MyClientCli implements IClientCli {
     @Override
     @Command
     public MessageResponse exit() throws IOException {
+    	shellThread.interrupt();
+    	client.unexportUnicasts();
+    	
         if (client.isConnected()) {
             logout();
             client.closeConnection();
