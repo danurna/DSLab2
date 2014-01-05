@@ -10,7 +10,6 @@ public class DownloadSubscriptionCallback implements IStringCallback {
 	}
 	@Override
 	public void callback(String message) throws RemoteException {
-		// TODO Auto-generated method stub
-
+		
 	}
 }

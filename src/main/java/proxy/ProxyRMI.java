@@ -30,8 +30,8 @@ public class ProxyRMI implements IProxyRMI {
 	}
 
 	@Override
-	public void subscribeToFile(String fileName, IStringCallback callback) throws RemoteException {
-		
+	public void subscribeToFile(String fileName, int downloadLimit, IStringCallback callback) throws RemoteException {
+		pmc.registerDownloadCallbackEntity(new DownloadCallbackEntity(fileName, downloadLimit, callback));
 	}
 
 	@Override

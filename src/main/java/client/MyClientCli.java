@@ -24,6 +24,8 @@ public class MyClientCli implements IClientCli {
     boolean loggedIn;
     
     private Thread shellThread;
+    
+    private DownloadSubscriptionCallback dlsCallback;
 
     public MyClientCli(MyClient client, Thread shellThread) {
         this.client = client;
@@ -169,7 +171,20 @@ public class MyClientCli implements IClientCli {
 			e.printStackTrace();
 			return new MessageResponse("A connection error occured. Please try again later.");
 		}
-    	
+    }
+    
+    @Command
+    public MessageResponse subscribeToFile(String fileName, int downloadLimit) {
+    	try {
+    		if (dlsCallback==null) {
+    			dlsCallback = new DownloadSubscriptionCallback(client);
+    		}
+    		client.getProxyRMI().subscribeToFile(fileName, downloadLimit, dlsCallback);;
+	    	return new MessageResponse("Subscription sucessfull.");
+		} catch (RemoteException e) {
+			e.printStackTrace();
+			return new MessageResponse("A connection error occured. Please try again later.");
+		}
     }
 
     //Private helper that tries to connect, if not already connected.

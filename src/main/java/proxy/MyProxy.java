@@ -485,6 +485,7 @@ public class MyProxy {
     	Integer ct = fileDownloadCountMap.get(fileName);
     	if (ct==null) {ct=0;}
     	fileDownloadCountMap.put(fileName, ++ct);
+    	pmc.checkDownloadCallbackEntitys(fileName, ct);
     }
     
     protected String[] getTop3DownloadedFiles() {

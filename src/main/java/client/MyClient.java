@@ -60,8 +60,10 @@ public class MyClient {
 	private Registry remoteRegistry;
 	private IProxyRMI proxyRMI;
 	private DownloadSubscriptionCallback dlsCallback;
+	
+	private Shell shell;
 
-    public MyClient(Config config, Config mcConfig) {
+    public MyClient(Config config, Config mcConfig, Shell shell) {
         if (!this.readConfigFile(config)) {
             //If reading config fails, we fail too.
             return;
@@ -71,7 +73,8 @@ public class MyClient {
             //If reading config fails, we fail too.
             return;
         }
-
+        
+        this.shell = shell;
         connected = false;
         versionMap = new HashMap<String, Integer>();
         this.initVersionsMap();
@@ -338,6 +341,9 @@ public class MyClient {
     	try {
 			UnicastRemoteObject.unexportObject(dlsCallback, true);
 		} catch (NoSuchObjectException e) {}
-
+    }
+    
+    public Shell getShell() {
+    	return shell;
     }
 }

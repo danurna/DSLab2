@@ -11,6 +11,10 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.concurrent.ConcurrentHashMap;
 
 import util.Config;
 
@@ -28,12 +32,15 @@ public class ProxyManagementComponent {
 	
 	private MyProxy proxy;
 	
+	private ConcurrentHashMap<String, Collection<DownloadCallbackEntity>> downloadCallbackMap;
+	
 	public ProxyManagementComponent(Config config, MyProxy proxy) {
 		this.config = config;
 		if (!this.readConfigFile()) {
             return;
         }
 		try {
+			this.downloadCallbackMap = new ConcurrentHashMap<String,Collection<DownloadCallbackEntity>>();
 			this.proxy = proxy;
 			registry = LocateRegistry.createRegistry(proxyRMIPort);
 			proxyRMI = new ProxyRMI(this);
@@ -103,5 +110,29 @@ public class ProxyManagementComponent {
 		} catch (NotBoundException e) {
 			
 		}
+    }
+    
+    protected void registerDownloadCallbackEntity(DownloadCallbackEntity entity) {
+    	Collection<DownloadCallbackEntity> col = downloadCallbackMap.get(entity.fileName);
+    	if (col==null) {
+    		col = new ArrayList<DownloadCallbackEntity>();
+    	}
+    	col.add(entity);
+    	downloadCallbackMap.put(entity.fileName, col);
+    }
+    protected void checkDownloadCallbackEntitys(String fileName,int downloadCount) {
+    	Collection<DownloadCallbackEntity> col = downloadCallbackMap.get(fileName);
+    	if (col==null) {
+    		return;
+    	} else {
+    		for (DownloadCallbackEntity e : col) {
+    			if (e.downloadLimit<=downloadCount) {
+    				try {
+						e.callback.callback("File "+fileName+" was downloaded "+e.downloadLimit+" times.");
+						col.remove(e);
+					} catch (RemoteException e1) {}
+    			}
+    		}
+    	}
     }
 }
