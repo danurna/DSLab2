@@ -113,26 +113,48 @@ public class ProxyManagementComponent {
     }
     
     protected void registerDownloadCallbackEntity(DownloadCallbackEntity entity) {
-    	Collection<DownloadCallbackEntity> col = downloadCallbackMap.get(entity.fileName);
+    	Collection<DownloadCallbackEntity> col;
+    	synchronized (downloadCallbackMap) {
+	    	col = downloadCallbackMap.get(entity.fileName);
+    	}
     	if (col==null) {
     		col = new ArrayList<DownloadCallbackEntity>();
     	}
     	col.add(entity);
-    	downloadCallbackMap.put(entity.fileName, col);
+    	synchronized (downloadCallbackMap) {
+    		downloadCallbackMap.put(entity.fileName, col);
+    	}
     }
     protected void checkDownloadCallbackEntitys(String fileName,int downloadCount) {
-    	Collection<DownloadCallbackEntity> col = downloadCallbackMap.get(fileName);
-    	if (col==null) {
-    		return;
-    	} else {
-    		for (DownloadCallbackEntity e : col) {
-    			if (e.downloadLimit<=downloadCount) {
-    				try {
-						e.callback.callback("File "+fileName+" was downloaded "+e.downloadLimit+" times.");
-						col.remove(e);
-					} catch (RemoteException e1) {}
-    			}
-    		}
+    	synchronized (downloadCallbackMap) {
+	    	Collection<DownloadCallbackEntity> col = downloadCallbackMap.get(fileName);
+	    	if (col==null) {
+	    		return;
+	    	} else {
+	    		for (DownloadCallbackEntity e : col) {
+	    			if (e.downloadLimit<=downloadCount) {
+	    				try {
+							e.callback.callback("File "+fileName+" was downloaded "+e.downloadLimit+" times.");
+							col.remove(e);
+						} catch (RemoteException e1) {}
+	    			}
+	    		}
+	    	}
+    	}
+    }
+    
+    protected void userLoggedOut(String userName) {
+    	synchronized (downloadCallbackMap) {
+	    	ArrayList<DownloadCallbackEntity> remove = new ArrayList<DownloadCallbackEntity>();
+	    	for (Collection<DownloadCallbackEntity> ce : downloadCallbackMap.values()) {
+	    		remove.clear();
+	    		for (DownloadCallbackEntity e : ce) {
+	    			if (userName.equals(e.userName)) {
+	    				remove.add(e);
+	    			}
+	    		}
+	    		ce.removeAll(remove);
+	    	}
     	}
     }
 }

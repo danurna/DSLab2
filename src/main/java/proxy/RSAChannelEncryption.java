@@ -17,7 +17,7 @@ import java.security.PublicKey;
 /**
  * Adds RSA Authentication and AES encryption to TCPChannel connection.
  */
-public class RSAChannelEncryption extends TCPChannel{
+public class RSAChannelEncryption extends TCPChannel {
     private TCPChannel parentChannel;
     private PrivateKey privateKey;
     private PublicKey publicKey;

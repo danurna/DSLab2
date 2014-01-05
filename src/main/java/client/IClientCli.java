@@ -157,4 +157,6 @@ public interface IClientCli {
     public MessageResponse writeQuorum();
     @Command
     public MessageResponse topThreeDownloads();
+    @Command
+    public MessageResponse subscribe(String fileName, int downloadLimit);
 }

@@ -121,6 +121,10 @@ public class MyProxy {
     public Collection<UserEntity> getUserList() {
         return userMap.values();
     }
+    
+    public UserEntity getUser(String userName) {
+    	return userMap.get(userName);
+    }
 
     /**
      * @return Collection of active fileservers.
@@ -521,5 +525,10 @@ public class MyProxy {
     
     protected ProxyManagementComponent getProxyManagementComponent() {
     	return pmc;
+    }
+    
+    protected int getFileDownloadCount(String fileName) {
+    	Integer ct = fileDownloadCountMap.get(fileName);
+    	return (ct!=null ? ct : 0);
     }
 }

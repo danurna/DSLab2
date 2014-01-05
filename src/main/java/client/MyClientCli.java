@@ -12,6 +12,7 @@ import util.MyUtils;
 import java.io.File;
 import java.io.IOException;
 import java.rmi.RemoteException;
+import java.rmi.server.UnicastRemoteObject;
 import java.util.Collection;
 
 /**
@@ -22,6 +23,8 @@ import java.util.Collection;
 public class MyClientCli implements IClientCli {
     private MyClient client;
     boolean loggedIn;
+    
+    String userName="";
     
     private Thread shellThread;
     
@@ -54,7 +57,8 @@ public class MyClientCli implements IClientCli {
 
         if (loginResponse.getType() == LoginResponse.Type.SUCCESS)
             loggedIn = true;
-
+        
+        this.userName = username;
         return loginResponse;
     }
 
@@ -117,7 +121,7 @@ public class MyClientCli implements IClientCli {
         MessageResponse response = (MessageResponse) client.sendRequest(new LogoutRequest());
         if (response != null && response.toString().equals("Successfully logged out."))
             loggedIn = false;
-
+        userName="";
         return response;
     }
 
@@ -128,7 +132,9 @@ public class MyClientCli implements IClientCli {
     	client.unexportUnicasts();
     	
         if (client.isConnected()) {
-            logout();
+        	try {
+        		logout();
+        	} catch (java.net.SocketException e) {}
             client.closeConnection();
         }
 
@@ -137,6 +143,7 @@ public class MyClientCli implements IClientCli {
     }
     
     @Command
+    @Override
     public MessageResponse readQuorum() {
     	try {
 	    	return new MessageResponse("Read-Quorum is set to "+client.getProxyRMI().getReadQuorumSize()+".");
@@ -148,6 +155,7 @@ public class MyClientCli implements IClientCli {
     }
     
     @Command
+    @Override
     public MessageResponse writeQuorum() {
     	try {
 	    	return new MessageResponse("Write-Quorum is set to "+client.getProxyRMI().getWriteQuorumSize()+".");
@@ -159,6 +167,7 @@ public class MyClientCli implements IClientCli {
     }
     
     @Command
+    @Override
     public MessageResponse topThreeDownloads() {
     	try {
     		String out = "Top Three Downloads:";
@@ -174,13 +183,15 @@ public class MyClientCli implements IClientCli {
     }
     
     @Command
-    public MessageResponse subscribeToFile(String fileName, int downloadLimit) {
+    @Override
+    public MessageResponse subscribe(String fileName, int downloadLimit) {
     	try {
     		if (dlsCallback==null) {
     			dlsCallback = new DownloadSubscriptionCallback(client);
+    			UnicastRemoteObject.exportObject(dlsCallback, 0);
     		}
-    		client.getProxyRMI().subscribeToFile(fileName, downloadLimit, dlsCallback);;
-	    	return new MessageResponse("Subscription sucessfull.");
+    		String out = client.getProxyRMI().subscribeToFile(fileName, downloadLimit, (loggedIn ? userName : ""), dlsCallback);;
+	    	return new MessageResponse(out);
 		} catch (RemoteException e) {
 			e.printStackTrace();
 			return new MessageResponse("A connection error occured. Please try again later.");

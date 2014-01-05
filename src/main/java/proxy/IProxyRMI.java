@@ -11,7 +11,7 @@ public interface IProxyRMI extends Remote {
 	int getReadQuorumSize() throws RemoteException;
 	int getWriteQuorumSize() throws RemoteException;
 	String[] getTop3DownloadedFiles() throws RemoteException;
-	void subscribeToFile(String fileName, int downloadLimit, IStringCallback callback) throws RemoteException;
+	String subscribeToFile(String fileName, int downloadLimit, String username, IStringCallback callback) throws RemoteException;
 	byte[] getProxyPublicKey() throws RemoteException;
 	void setClientPublicKey(String user, byte[] key) throws RemoteException;
 }

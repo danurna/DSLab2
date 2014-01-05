@@ -5,6 +5,7 @@ import java.util.Collection;
 
 import client.IStringCallback;
 import model.FileserverEntity;
+import model.UserEntity;
 
 public class ProxyRMI implements IProxyRMI {
 	
@@ -30,8 +31,14 @@ public class ProxyRMI implements IProxyRMI {
 	}
 
 	@Override
-	public void subscribeToFile(String fileName, int downloadLimit, IStringCallback callback) throws RemoteException {
-		pmc.registerDownloadCallbackEntity(new DownloadCallbackEntity(fileName, downloadLimit, callback));
+	public String subscribeToFile(String fileName, int downloadLimit, String userName, IStringCallback callback) throws RemoteException {
+		UserEntity user = pmc.getProxy().getUser(userName);
+		if (user == null || !user.isOnline()) {
+			return "Please login first.";
+		}
+		int count = pmc.getProxy().getFileDownloadCount(fileName);
+		pmc.registerDownloadCallbackEntity(new DownloadCallbackEntity(fileName, userName, count+downloadLimit, callback));
+		return "Successfully subscribed for file: "+fileName;
 	}
 
 	@Override
