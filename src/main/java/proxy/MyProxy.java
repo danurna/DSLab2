@@ -411,38 +411,44 @@ public class MyProxy {
     private Collection<FileserverEntity> getQuorum(boolean nR){
         int quorum = 0;
         if (nR){
-            quorum = ((int) Math.floor(fileserverMap.size() / 2.0))+1;
+            quorum = getNR();
         }else{
-            quorum = Math.min(((int) Math.ceil(fileserverMap.size() / 2.0))+1,fileserverMap.size());
+            quorum = getNW();
         }
         int counter = 0;
         Collection<FileserverEntity> list = fileserverMap.values();
         Collection<FileserverEntity> quorumlist = new ArrayList<FileserverEntity>();
+        Collection<FileserverEntity> quorumlistTemp = new ArrayList<FileserverEntity>();
         for (FileserverEntity entity1 : list) {
             if (entity1.isOnline()){
                 if (counter<quorum){
                     quorumlist.add(entity1);
                     counter++;
                 }else{
+                    if (quorumlistTemp.isEmpty()){
+                        quorumlistTemp.addAll(quorumlist);
+                    }
                     for (FileserverEntity entity : quorumlist){
                         if (entity.getUsage()>entity1.getUsage()){
-                            quorumlist.remove(entity);
-                            quorumlist.add(entity1);
+                            quorumlistTemp.remove(entity);
+                            quorumlistTemp.add(entity1);
                         }
                     }
+                    quorumlist.clear();
+                    quorumlist.addAll(quorumlistTemp);
                 }
             }
         }
         return quorumlist;
     }
     public int getNR() {
-    	return ((int) Math.floor(fileserverMap.size() / 2.0))+1;
+    	return ((int) Math.floor(fileserverMap.size() / 2.0));
     }
     public Collection<FileserverEntity> getReadQuorum(){
         return getQuorum(true);
     }
     public int getNW() {
-    	return Math.min(((int) Math.ceil(fileserverMap.size() / 2.0))+1,fileserverMap.size());
+    	return ((int) Math.floor(fileserverMap.size() / 2.0))+1;
     }
     public Collection<FileserverEntity> getWriteQuorum(){
         return getQuorum(false);
