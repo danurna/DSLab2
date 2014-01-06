@@ -31,29 +31,29 @@ public class RSAChannelEncryption extends ChannelDecorator{
     private Cipher encryptAES;
     private Cipher decryptAES;
     private Object lastObjectSent;
+    private boolean shouldStartAuthentication;
 
     public RSAChannelEncryption(TCPChannel channel, PrivateKey privateKey, PublicKey publicKey){
         super(channel);
         this.privateKey = privateKey;
         this.publicKey = publicKey;
         this.keysDirectoryPath = "";
+        this.shouldStartAuthentication = true;
     }
 
-    public RSAChannelEncryption(TCPChannel channel, PrivateKey privateKey, String keysDirectoryPath){
+    public RSAChannelEncryption(TCPChannel channel, PrivateKey privateKey, String keysDirectoryPath, boolean shouldStartAuthentication){
         this(channel, privateKey, (PublicKey)null);
         this.keysDirectoryPath = keysDirectoryPath;
+        this.shouldStartAuthentication = shouldStartAuthentication;
     }
 
     public Object readObject() throws IOException, ClassNotFoundException {
         Object obj = super.readObject();
 
         if( obj instanceof byte[] ){
-            //System.out.println("BYTE ARRAY OBJECT HERE!");
-
             //DECODE BASE64
             byte[] byteObj = (byte[])obj;
             byteObj = MyUtils.base64decodeBytes(byteObj);
-            //System.out.println("DECODED!");
 
             //DECIPHER, RSA OR AES
             if(sessionKey == null){
@@ -62,18 +62,12 @@ public class RSAChannelEncryption extends ChannelDecorator{
                 byteObj = decryptAES(byteObj);
             }
 
-            //System.out.println("DECIPHERED!");
-
             //REBUILD OBJECT
             obj = MyUtils.deserialize(byteObj);
-            System.out.println("DESERIALIZED: " + obj);
-
 
             if(handleUnsealedObject(obj)){
-                //System.out.println("RETURNING: " + obj);
                 return this.readObject();
             }
-
         }
 
         return obj;
@@ -82,6 +76,14 @@ public class RSAChannelEncryption extends ChannelDecorator{
     public void writeObject(Object object) throws IOException {
 
         if(sessionKey == null){
+
+            //If no authentication should be started on this channel-end, this boolean-flag is true.
+            //e.g. proxy
+            if(!shouldStartAuthentication){
+                super.writeObject(object);
+                return;
+            }
+
             //No secure connection established. Start authentication.
             if(startAuthenticationForObject(object)){
                 //If authentication is done, we call this method again as session key should exist.
@@ -191,7 +193,6 @@ public class RSAChannelEncryption extends ChannelDecorator{
         //Handle incoming 1st message. PROXY SIDE.
         if( object instanceof ClientChallengeRequest ){
             ClientChallengeRequest clientChallengeRequest = (ClientChallengeRequest) object;
-           // System.out.println("WE'VE RECEIVED A ClientChallengeRequest!\n" + clientChallengeRequest);
 
             //Set public key according to client challenge
             try {
@@ -199,13 +200,8 @@ public class RSAChannelEncryption extends ChannelDecorator{
             } catch (IOException e) {
                 String msg = "Could not read public key for user " + clientChallengeRequest.getUsername();
                 System.err.println(msg);
-
                 //Send error msg to client.
-                try {
-                    super.writeObject(new MessageResponse(msg));
-                } catch (IOException e1) {
-                    System.err.println("Could not send message to client.");
-                }
+                super.writeObject(new MessageResponse(msg));
             }
 
             try {
@@ -226,7 +222,6 @@ public class RSAChannelEncryption extends ChannelDecorator{
         //Handle incoming 2nd message. CLIENT SIDE.
         }else if( object instanceof ClientChallengeResponse){
             ClientChallengeResponse clientChallengeResponse = (ClientChallengeResponse) object;
-            //System.out.println("WE'VE RECEIVED A ClientChallengeResponse!\n" + clientChallengeResponse);
 
             //Check if answer response contains given challenge
             if( lastObjectSent instanceof ClientChallengeRequest ){
@@ -257,7 +252,6 @@ public class RSAChannelEncryption extends ChannelDecorator{
         //Handle incoming 3d message. PROXY SIDE.
         }else if( object instanceof ProxyChallengeResponse ) {
             ProxyChallengeResponse proxyChallengeResponse = (ProxyChallengeResponse) object;
-           // System.out.println("WE'VE RECEIVED A ProxyChallengeResponse!\n" + proxyChallengeResponse);
 
             //Check if answer response contains given challenge
             if( lastObjectSent instanceof ClientChallengeResponse ){
@@ -276,8 +270,6 @@ public class RSAChannelEncryption extends ChannelDecorator{
 
     //Returns if authentication start was successful or not.
     private boolean startAuthenticationForObject(Object object) throws IOException {
-        //System.out.println("Authentication started");
-
         if( publicKey == null){
             System.err.println("Can't start authentication without public key.");
             return false;
@@ -309,7 +301,6 @@ public class RSAChannelEncryption extends ChannelDecorator{
             return false;
         }
 
-        //System.out.println("Authentication done");
         return true;
     }
 

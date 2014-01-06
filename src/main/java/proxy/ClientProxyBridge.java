@@ -179,7 +179,7 @@ public class ClientProxyBridge implements IProxy, Runnable {
         channel = new TCPChannel();
         //Use proxy's private key and give path to keys directory, because
         //depending on client's request we use different public keys.
-        channel = new RSAChannelEncryption(channel, privateKey, keysDirectoryPath);
+        channel = new RSAChannelEncryption(channel, privateKey, keysDirectoryPath, false);
 
         try {
             channel.setStreamsForSocket(clientSocket);
