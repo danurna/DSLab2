@@ -20,6 +20,7 @@ import java.net.DatagramSocket;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map.Entry;
@@ -42,6 +43,7 @@ public class MyProxy {
     private ConcurrentHashMap<String, Integer> fileDownloadCountMap;
     private Collection<Object> activeSockets;
     private PrivateKey privateKey;
+    private PublicKey publicKey;
     //Config values
     private int tcpPort;
     private int udpPort;
@@ -80,6 +82,10 @@ public class MyProxy {
         fileDownloadCountMap = new ConcurrentHashMap<String, Integer>();
         privateKey = this.readPrivateKey(privateKeyPath);
         if(privateKey == null){
+            return;
+        }
+        publicKey = this.readPublicKey(keysDir+"/proxy.pub.pem");
+        if(publicKey == null){
             return;
         }
 
@@ -293,6 +299,7 @@ public class MyProxy {
     public void handleClient(final Socket clientSocket) {
         ClientProxyBridge clientProxyBridge = new ClientProxyBridge(clientSocket, this);
         clientProxyBridge.setPrivateKey(privateKey);
+        clientProxyBridge.setKeysDirectoryPath(keysDir);
         executor.execute(clientProxyBridge);
     }
 
@@ -474,6 +481,19 @@ public class MyProxy {
             System.err.println("Something went wrong on reading proxy's private key.\n");
             return null;
         }
+        return ret;
+    }
+
+    private PublicKey readPublicKey(String path){
+        PublicKey ret = null;
+        try {
+            ret = MyUtils.getPublicKeyForPath(path);
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.err.println("Something went wrong on reading proxy's public key.\n");
+            return null;
+        }
+
         return ret;
     }
 

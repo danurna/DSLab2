@@ -6,13 +6,11 @@ import message.request.*;
 import message.response.DownloadTicketResponse;
 import message.response.LoginResponse;
 import message.response.MessageResponse;
-import model.FileserverEntity;
 import util.MyUtils;
 
 import java.io.File;
 import java.io.IOException;
 import java.rmi.RemoteException;
-import java.util.Collection;
 
 /**
  * Implementation of the Client ClI Interface.
@@ -41,6 +39,11 @@ public class MyClientCli implements IClientCli {
         }
 
         Response response = client.sendRequest(new LoginRequest(username, password));
+
+        if(response == null){
+            System.out.println("Login request failed.");
+            return null;
+        }
 
         //Could be message response if user is already logged in with other client
         if (!(response instanceof LoginResponse)) {
@@ -115,6 +118,8 @@ public class MyClientCli implements IClientCli {
         MessageResponse response = (MessageResponse) client.sendRequest(new LogoutRequest());
         if (response != null && response.toString().equals("Successfully logged out."))
             loggedIn = false;
+
+        client.userLoggedOut();
 
         return response;
     }

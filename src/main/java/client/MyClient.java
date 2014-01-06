@@ -5,10 +5,9 @@ import message.Request;
 import message.Response;
 import message.request.DownloadFileRequest;
 import message.request.LoginRequest;
-import message.request.ClientChallengeRequest;
 import message.response.DownloadFileResponse;
 import message.response.DownloadTicketResponse;
-import message.response.MessageResponse;
+import proxy.IProxyRMI;
 import proxy.RSAChannelEncryption;
 import proxy.TCPChannel;
 import util.ComponentFactory;
@@ -25,15 +24,10 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
-import java.security.*;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.util.HashMap;
 import java.util.Set;
-
-import proxy.IProxyRMI;
-
-import javax.crypto.Cipher;
-import javax.crypto.NoSuchPaddingException;
-import javax.crypto.SealedObject;
 
 /**
  * My client class maintains connection to proxy
@@ -219,17 +213,26 @@ public class MyClient {
         //If login request, we need to authenticate first.
         if(request instanceof LoginRequest){
             clientPrivateKey = readPrivateKey(keysDir+"/"+((LoginRequest) request).getUsername()+".pem");
-            //tcpChannel = new RSAChannelEncryption(originalTcpChannel, clientPrivateKey, proxyPubKey);
+            tcpChannel = new RSAChannelEncryption(originalTcpChannel, clientPrivateKey, proxyPubKey);
         }
 
         try {
             tcpChannel.writeObject(request);
+            System.out.println("CLIENT WROTE AN OBJECT: " + request);
 
             Object object = tcpChannel.readObject();
-
+            System.out.println("CLIENT READ AN OBJECT: " + object);
             if (object instanceof Response) {
                 return (Response) object;
             }
+
+/*            Object object = null;
+            while ((object = tcpChannel.readObject()) != null ) {
+
+                if (object instanceof Response) {
+                    return (Response) object;
+                }
+            }*/
 
         } catch(EOFException e){
             e.printStackTrace();
@@ -248,7 +251,7 @@ public class MyClient {
     public void closeConnection() {
         connected = false;
 
-        //If socket wasn't even opened, we don't need to close it.
+        //If socket wasn't even open, we don't need to close it.
         if (tcpChannel.getOut() == null) {
             return;
         }
@@ -314,6 +317,11 @@ public class MyClient {
         return connected;
     }
 
+    //Reset channel because of log out.
+    public void userLoggedOut(){
+        tcpChannel = originalTcpChannel;
+    }
+
     private PrivateKey readPrivateKey(String path){
         PrivateKey ret = null;
         try {
@@ -325,7 +333,6 @@ public class MyClient {
             }
             ret = MyUtils.getPrivateKeyForPathAndPassword(path, pw);
         } catch (IOException e) {
-            //e.printStackTrace();
             //Wrong usage or file does not exist.
             System.err.println("Something went wrong on reading user's private key.\n");
             return null;
@@ -337,7 +344,9 @@ public class MyClient {
     protected void unexportUnicasts() {
     	try {
 			UnicastRemoteObject.unexportObject(dlsCallback, true);
-		} catch (NoSuchObjectException e) {}
+		} catch (NoSuchObjectException e) {
+            //Won't happen.
+        }
 
     }
 }
