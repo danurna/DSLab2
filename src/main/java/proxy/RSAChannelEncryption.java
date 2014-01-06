@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.util.Arrays;
 
 /**
  * Adds RSA Authentication and AES encryption to TCPChannel connection.
@@ -29,6 +30,7 @@ public class RSAChannelEncryption extends ChannelDecorator{
     private Cipher decryptRSA;
     private Cipher encryptAES;
     private Cipher decryptAES;
+    private Object lastObjectSent;
 
     public RSAChannelEncryption(TCPChannel channel, PrivateKey privateKey, PublicKey publicKey){
         super(channel);
@@ -64,7 +66,7 @@ public class RSAChannelEncryption extends ChannelDecorator{
 
             //REBUILD OBJECT
             obj = MyUtils.deserialize(byteObj);
-            //System.out.println("DESERIALIZED!");
+            System.out.println("DESERIALIZED: " + obj);
 
 
             if(handleUnsealedObject(obj)){
@@ -180,14 +182,16 @@ public class RSAChannelEncryption extends ChannelDecorator{
         return null;
     }
 
-    //Returns if object is handled by this function or not. If not it should go up to parent channel.
+    //Returns true if necessary to read/wait for an answer.
+    //For example sending ClientChallengeResponse waits for an ProxyChallengeResponse.
+    //But receiving ProxyChallengeResponse, doesn't need to wait.
+    //If not it should go up to parent channel.
     private boolean handleUnsealedObject(Object object){
 
         //Handle incoming 1st message. PROXY SIDE.
         if( object instanceof ClientChallengeRequest ){
-
             ClientChallengeRequest clientChallengeRequest = (ClientChallengeRequest) object;
-            //System.out.println("WE'VE RECEIVED A ClientChallengeRequest!\n" + clientChallengeRequest);
+           // System.out.println("WE'VE RECEIVED A ClientChallengeRequest!\n" + clientChallengeRequest);
 
             //Set public key according to client challenge
             try {
@@ -209,6 +213,7 @@ public class RSAChannelEncryption extends ChannelDecorator{
                 byte[] ser = MyUtils.serialize(response);
                 byte[] encodedCipherMsg = MyUtils.base64encodeBytes(encryptRSA(ser));
                 super.writeObject(encodedCipherMsg);
+                lastObjectSent = response;
 
                 //Wait for expected ProxyChallengeResponse.
                 this.readObject();
@@ -223,6 +228,15 @@ public class RSAChannelEncryption extends ChannelDecorator{
             ClientChallengeResponse clientChallengeResponse = (ClientChallengeResponse) object;
             //System.out.println("WE'VE RECEIVED A ClientChallengeResponse!\n" + clientChallengeResponse);
 
+            //Check if answer response contains given challenge
+            if( lastObjectSent instanceof ClientChallengeRequest ){
+                ClientChallengeRequest precedingRequest = (ClientChallengeRequest) lastObjectSent;
+                if( !Arrays.equals( precedingRequest.getChallenge(), clientChallengeResponse.getClientChallenge() ) ){
+                    System.err.println("Sent Challenge is not equal to received one! Authentication failed.");
+                    //TODO: Exception?
+                }
+            }
+
             byte[] byteSecretKey = MyUtils.base64decodeBytes( clientChallengeResponse.getSecretKey() );
             sessionKey = new SecretKeySpec(byteSecretKey, 0, byteSecretKey.length, "AES");
             ivParameter = new IvParameterSpec( MyUtils.base64decodeBytes( clientChallengeResponse.getIvParameter() ));
@@ -233,22 +247,27 @@ public class RSAChannelEncryption extends ChannelDecorator{
                 byte[] ser = MyUtils.serialize(proxyChallengeResponse);
                 byte[] encodedCipherMsg = MyUtils.base64encodeBytes(encryptAES(ser));
                 super.writeObject(encodedCipherMsg);
+                lastObjectSent = proxyChallengeResponse;
             } catch (Exception e) {
                 e.printStackTrace();
             }
 
-            return true;
+            return false;
 
         //Handle incoming 3d message. PROXY SIDE.
         }else if( object instanceof ProxyChallengeResponse ) {
             ProxyChallengeResponse proxyChallengeResponse = (ProxyChallengeResponse) object;
-            //System.out.println("WE'VE RECEIVED A ProxyChallengeResponse!\n" + proxyChallengeResponse);
+           // System.out.println("WE'VE RECEIVED A ProxyChallengeResponse!\n" + proxyChallengeResponse);
 
-            try {
-                super.writeObject(new MessageResponse("Authentication successful."));
-            } catch (IOException e) {
-                e.printStackTrace();
+            //Check if answer response contains given challenge
+            if( lastObjectSent instanceof ClientChallengeResponse ){
+                ClientChallengeResponse precedingResponse = (ClientChallengeResponse) lastObjectSent;
+                if( !Arrays.equals( precedingResponse.getProxyChallenge(), proxyChallengeResponse.getProxyChallenge() ) ){
+                    System.err.println("Sent Challenge is not equal to received one! Authentication failed.");
+                    //TODO: Exception?
+                }
             }
+
             return false;
         }
 
@@ -257,7 +276,7 @@ public class RSAChannelEncryption extends ChannelDecorator{
 
     //Returns if authentication start was successful or not.
     private boolean startAuthenticationForObject(Object object){
-        System.out.println("Authentication start");
+        //System.out.println("Authentication started");
 
         if( publicKey == null){
             System.err.println("Can't start authentication without public key.");
@@ -277,6 +296,7 @@ public class RSAChannelEncryption extends ChannelDecorator{
                 //encrypt and encode base64
                 byte[] encodedCipherMsg = MyUtils.base64encodeBytes(encryptRSA(ser));
                 super.writeObject(encodedCipherMsg);
+                lastObjectSent = clientChallengeRequest;
 
                 //Wait for expected ClientChallengeResponse.
                 this.readObject();
@@ -289,8 +309,7 @@ public class RSAChannelEncryption extends ChannelDecorator{
             return false;
         }
 
-        System.out.println("Authentication done");
-
+        //System.out.println("Authentication done");
         return true;
     }
 

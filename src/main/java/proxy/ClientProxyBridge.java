@@ -186,11 +186,11 @@ public class ClientProxyBridge implements IProxy, Runnable {
 
             Object obj;
             while ((obj = channel.readObject()) != null && !Thread.currentThread().isInterrupted()) {
-                System.out.println("PROXY READ AN OBJECT: " + obj);
+                //System.out.println("PROXY READ AN OBJECT: " + obj);
                 Response response = performRequest(obj);
 
                 if (response != null){
-                    System.out.println("PROXY WROTE AN OBJECT: " + response);
+                    //System.out.println("PROXY WROTE AN OBJECT: " + response);
                     channel.writeObject(response);
                 }
 

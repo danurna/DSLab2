@@ -218,26 +218,17 @@ public class MyClient {
 
         try {
             tcpChannel.writeObject(request);
-            System.out.println("CLIENT WROTE AN OBJECT: " + request);
+            //System.out.println("CLIENT WROTE AN OBJECT: " + request);
 
             Object object = tcpChannel.readObject();
-            System.out.println("CLIENT READ AN OBJECT: " + object);
+            //System.out.println("CLIENT READ AN OBJECT: " + object);
             if (object instanceof Response) {
                 return (Response) object;
             }
 
-/*            Object object = null;
-            while ((object = tcpChannel.readObject()) != null ) {
-
-                if (object instanceof Response) {
-                    return (Response) object;
-                }
-            }*/
-
         } catch(EOFException e){
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
+
+        } catch (IOException e){
             this.closeConnection();
             System.out.println("Error sending request. Connections closed.");
         } catch (ClassNotFoundException e) {
