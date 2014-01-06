@@ -209,9 +209,9 @@ public class ClientProxyBridge implements IProxy, Runnable {
         } catch (SocketException e) {
             System.out.println("Socket to client closed!");
         } catch (IOException e) {
-            e.printStackTrace();
+            //Will occur in case of failed authentication. No problem.
         } catch (ClassNotFoundException e) {
-            e.printStackTrace();
+           //Won't occur.
         } finally {
             //Cleanup
             try {

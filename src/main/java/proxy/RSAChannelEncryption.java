@@ -186,7 +186,7 @@ public class RSAChannelEncryption extends ChannelDecorator{
     //For example sending ClientChallengeResponse waits for an ProxyChallengeResponse.
     //But receiving ProxyChallengeResponse, doesn't need to wait.
     //If not it should go up to parent channel.
-    private boolean handleUnsealedObject(Object object){
+    private boolean handleUnsealedObject(Object object) throws IOException {
 
         //Handle incoming 1st message. PROXY SIDE.
         if( object instanceof ClientChallengeRequest ){
@@ -217,7 +217,7 @@ public class RSAChannelEncryption extends ChannelDecorator{
 
                 //Wait for expected ProxyChallengeResponse.
                 this.readObject();
-            } catch (Exception e) {
+            } catch (ClassNotFoundException e) {
                 e.printStackTrace();
             }
 
@@ -232,8 +232,8 @@ public class RSAChannelEncryption extends ChannelDecorator{
             if( lastObjectSent instanceof ClientChallengeRequest ){
                 ClientChallengeRequest precedingRequest = (ClientChallengeRequest) lastObjectSent;
                 if( !Arrays.equals( precedingRequest.getChallenge(), clientChallengeResponse.getClientChallenge() ) ){
-                    System.err.println("Sent Challenge is not equal to received one! Authentication failed.");
-                    //TODO: Exception?
+                    System.err.println("The proxy's challenge response was wrong. Authentication failed.");
+                    throw new IOException("Authentication failed.");
                 }
             }
 
@@ -263,8 +263,8 @@ public class RSAChannelEncryption extends ChannelDecorator{
             if( lastObjectSent instanceof ClientChallengeResponse ){
                 ClientChallengeResponse precedingResponse = (ClientChallengeResponse) lastObjectSent;
                 if( !Arrays.equals( precedingResponse.getProxyChallenge(), proxyChallengeResponse.getProxyChallenge() ) ){
-                    System.err.println("Sent Challenge is not equal to received one! Authentication failed.");
-                    //TODO: Exception?
+                    System.err.println("The client's challenge response was wrong. Authentication failed.");
+                    throw new IOException("Authentication failed.");
                 }
             }
 
@@ -275,7 +275,7 @@ public class RSAChannelEncryption extends ChannelDecorator{
     }
 
     //Returns if authentication start was successful or not.
-    private boolean startAuthenticationForObject(Object object){
+    private boolean startAuthenticationForObject(Object object) throws IOException {
         //System.out.println("Authentication started");
 
         if( publicKey == null){
@@ -300,8 +300,8 @@ public class RSAChannelEncryption extends ChannelDecorator{
 
                 //Wait for expected ClientChallengeResponse.
                 this.readObject();
-            } catch (Exception e){
-                e.printStackTrace();
+            } catch (ClassNotFoundException e){
+                //Won't occur
             }
 
         }else{
