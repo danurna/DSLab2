@@ -5,6 +5,7 @@ import message.Response;
 import message.response.*;
 
 import java.io.IOException;
+import java.security.PublicKey;
 
 /**
  * This interface defines the functionality for the client.
@@ -157,4 +158,10 @@ public interface IClientCli {
     public MessageResponse writeQuorum();
     @Command
     public MessageResponse topThreeDownloads();
+    @Command
+    public MessageResponse subscribe(String fileName, int downloadLimit);
+    @Command
+    public MessageResponse getProxyPublicKey();
+    @Command
+    public MessageResponse setUserPublicKey(String userName);
 }

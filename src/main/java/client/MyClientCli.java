@@ -11,6 +11,8 @@ import util.MyUtils;
 import java.io.File;
 import java.io.IOException;
 import java.rmi.RemoteException;
+import java.rmi.server.UnicastRemoteObject;
+import java.security.PublicKey;
 
 /**
  * Implementation of the Client ClI Interface.
@@ -21,7 +23,11 @@ public class MyClientCli implements IClientCli {
     private MyClient client;
     boolean loggedIn;
     
+    String userName="";
+    
     private Thread shellThread;
+    
+    private DownloadSubscriptionCallback dlsCallback;
 
     public MyClientCli(MyClient client, Thread shellThread) {
         this.client = client;
@@ -55,7 +61,8 @@ public class MyClientCli implements IClientCli {
 
         if (loginResponse.getType() == LoginResponse.Type.SUCCESS)
             loggedIn = true;
-
+        
+        this.userName = username;
         return loginResponse;
     }
 
@@ -120,6 +127,7 @@ public class MyClientCli implements IClientCli {
             loggedIn = false;
 
         client.userLoggedOut();
+        userName = "";
 
         return response;
     }
@@ -128,10 +136,14 @@ public class MyClientCli implements IClientCli {
     @Command
     public MessageResponse exit() throws IOException {
     	shellThread.interrupt();
-    	client.unexportUnicasts();
+
+        if(dlsCallback == null)
+    	    UnicastRemoteObject.unexportObject(dlsCallback, true);
     	
         if (client.isConnected()) {
-            logout();
+        	try {
+        		logout();
+        	} catch (java.net.SocketException e) {}
             client.closeConnection();
         }
 
@@ -140,6 +152,7 @@ public class MyClientCli implements IClientCli {
     }
     
     @Command
+    @Override
     public MessageResponse readQuorum() {
     	try {
 	    	return new MessageResponse("Read-Quorum is set to "+client.getProxyRMI().getReadQuorumSize()+".");
@@ -151,6 +164,7 @@ public class MyClientCli implements IClientCli {
     }
     
     @Command
+    @Override
     public MessageResponse writeQuorum() {
     	try {
 	    	return new MessageResponse("Write-Quorum is set to "+client.getProxyRMI().getWriteQuorumSize()+".");
@@ -162,6 +176,7 @@ public class MyClientCli implements IClientCli {
     }
     
     @Command
+    @Override
     public MessageResponse topThreeDownloads() {
     	try {
     		String out = "Top Three Downloads:";
@@ -174,9 +189,59 @@ public class MyClientCli implements IClientCli {
 			e.printStackTrace();
 			return new MessageResponse("A connection error occured. Please try again later.");
 		}
-    	
     }
-
+    
+    @Command
+    @Override
+    public MessageResponse subscribe(String fileName, int downloadLimit) {
+    	try {
+    		if (dlsCallback==null) {
+    			dlsCallback = new DownloadSubscriptionCallback(client);
+    			UnicastRemoteObject.exportObject(dlsCallback, 0);
+    		}
+    		String out = client.getProxyRMI().subscribeToFile(fileName, downloadLimit, (loggedIn ? userName : ""), dlsCallback);;
+	    	return new MessageResponse(out);
+		} catch (RemoteException e) {
+			e.printStackTrace();
+			return new MessageResponse("A connection error occured. Please try again later.");
+		}
+    }
+    
+    @Command
+    @Override
+    public MessageResponse getProxyPublicKey() {
+    	try {
+    		PublicKey key = client.getProxyRMI().getProxyPublicKey();
+    		if (key==null) {
+    			return new MessageResponse("Getting key failed. Please try again later.");
+    		}
+    		client.setProxyPublicKey(key);
+	    	return new MessageResponse("Successfully received public key of Proxy.");
+		} catch (RemoteException e) {
+			e.printStackTrace();
+			return new MessageResponse("A connection error occured. Please try again later.");
+		}
+    }
+    
+    @Command
+    @Override
+    public MessageResponse setUserPublicKey(String userName) {
+    	try {
+    		PublicKey key = client.getClientPublicKey(userName);
+    		if (key==null) {
+    			return new MessageResponse("Public key for user "+userName+" not found!");
+    		}
+    		boolean success = client.getProxyRMI().setClientPublicKey(userName, key);
+    		if (!success) {
+    			return new MessageResponse("Sending key failed. Please try again later.");
+    		}
+	    	return new MessageResponse("Successfully received public key of Proxy.");
+		} catch (RemoteException e) {
+			e.printStackTrace();
+			return new MessageResponse("A connection error occured. Please try again later.");
+		}
+    }
+    
     //Private helper that tries to connect, if not already connected.
     private boolean isConnected() {
         if (client.isConnected()) {

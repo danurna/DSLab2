@@ -53,9 +53,10 @@ public class MyClient {
 
 	private Registry remoteRegistry;
 	private IProxyRMI proxyRMI;
-	private DownloadSubscriptionCallback dlsCallback;
+	
+	private Shell shell;
 
-    public MyClient(Config config, Config mcConfig) {
+    public MyClient(Config config, Config mcConfig, Shell shell) {
         if (!this.readConfigFile(config)) {
             //If reading config fails, we fail too.
             return;
@@ -65,7 +66,8 @@ public class MyClient {
             //If reading config fails, we fail too.
             return;
         }
-
+        
+        this.shell = shell;
         connected = false;
         versionMap = new HashMap<String, Integer>();
         this.initVersionsMap();
@@ -163,8 +165,6 @@ public class MyClient {
             Remote tmp = remoteRegistry.lookup(rmiBindingName);
             if (tmp instanceof IProxyRMI) {
                 proxyRMI = (IProxyRMI) tmp;
-                dlsCallback = new DownloadSubscriptionCallback(this);
-                UnicastRemoteObject.exportObject(dlsCallback, 0);
             } else {
                 return false;
             }
@@ -230,7 +230,7 @@ public class MyClient {
 
         } catch (IOException e){
             this.closeConnection();
-            System.out.println("Error sending request. Connections closed.");
+            //System.out.println("Error sending request. Connections closed.");
         } catch (ClassNotFoundException e) {
             //Shouldn't occur.
         }
@@ -330,14 +330,26 @@ public class MyClient {
         }
         return ret;
     }
-
-
-    protected void unexportUnicasts() {
+    
+    public Shell getShell() {
+    	return shell;
+    }
+    
+    public void setProxyPublicKey(PublicKey publicKey) {
+    	this.proxyPubKey = publicKey;
     	try {
-			UnicastRemoteObject.unexportObject(dlsCallback, true);
-		} catch (NoSuchObjectException e) {
-            //Won't happen.
+			MyUtils.writePublicKeyToPath(this.proxyPubKeyPath, publicKey);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+    }
+    
+    public PublicKey getClientPublicKey(String userName) {
+    	try {
+			return MyUtils.getPublicKeyForPath(keysDir+System.getProperty("file.seperator")+userName+".pub.pem");
+		} catch (IOException e) {
+			e.printStackTrace();
+			return null;
         }
-
     }
 }

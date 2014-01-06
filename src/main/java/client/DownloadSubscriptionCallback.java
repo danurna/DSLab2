@@ -1,5 +1,6 @@
 package client;
 
+import java.io.IOException;
 import java.rmi.RemoteException;
 
 public class DownloadSubscriptionCallback implements IStringCallback {
@@ -10,7 +11,8 @@ public class DownloadSubscriptionCallback implements IStringCallback {
 	}
 	@Override
 	public void callback(String message) throws RemoteException {
-		// TODO Auto-generated method stub
-
+		try {
+			client.getShell().writeLine(message.toString());
+		} catch (IOException e) {}
 	}
 }

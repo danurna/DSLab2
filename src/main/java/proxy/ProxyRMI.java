@@ -1,10 +1,13 @@
 package proxy;
 
+import java.io.IOException;
 import java.rmi.RemoteException;
+import java.security.PublicKey;
 import java.util.Collection;
 
 import client.IStringCallback;
 import model.FileserverEntity;
+import model.UserEntity;
 
 public class ProxyRMI implements IProxyRMI {
 	
@@ -30,18 +33,33 @@ public class ProxyRMI implements IProxyRMI {
 	}
 
 	@Override
-	public void subscribeToFile(String fileName, IStringCallback callback) throws RemoteException {
-		
+	public String subscribeToFile(String fileName, int downloadLimit, String userName, IStringCallback callback) throws RemoteException {
+		UserEntity user = pmc.getProxy().getUser(userName);
+		if (user == null || !user.isOnline()) {
+			return "Please login first.";
+		}
+		int count = pmc.getProxy().getFileDownloadCount(fileName);
+		pmc.registerDownloadCallbackEntity(new DownloadCallbackEntity(fileName, userName, count, downloadLimit, callback));
+		return "Successfully subscribed for file: "+fileName;
 	}
 
 	@Override
-	public byte[] getProxyPublicKey() throws RemoteException {
-		return pmc.getProxy().getPublicKey();
+	public PublicKey getProxyPublicKey() throws RemoteException {
+		try {
+			return pmc.getProxy().getPublicKey();
+		} catch (IOException e) {
+			return null;
+		}
 	}
 
 	@Override
-	public void setClientPublicKey(String user, byte[] key) throws RemoteException {
-		pmc.writeClientPublicKey(user, key);
+	public boolean setClientPublicKey(String user, PublicKey publicKey) throws RemoteException {
+		try {
+			pmc.writeClientPublicKey(user, publicKey);
+			return true;
+		} catch (IOException e) {
+			return false;
+		}
 	}
 
 }

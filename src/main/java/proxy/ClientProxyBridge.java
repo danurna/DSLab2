@@ -167,6 +167,8 @@ public class ClientProxyBridge implements IProxy, Runnable {
 
         //Update user
         currentUser.setOnline(loggedIn);
+        
+        myProxy.getProxyManagementComponent().userLoggedOut(currentUser.getName());
 
         //Log user out.
         currentUser = null;

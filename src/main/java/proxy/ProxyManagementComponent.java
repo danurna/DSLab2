@@ -11,8 +11,14 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
+import java.security.PublicKey;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.concurrent.ConcurrentHashMap;
 
 import util.Config;
+import util.MyUtils;
 
 public class ProxyManagementComponent {
 	private Config config;
@@ -28,12 +34,15 @@ public class ProxyManagementComponent {
 	
 	private MyProxy proxy;
 	
+	private ConcurrentHashMap<String, Collection<DownloadCallbackEntity>> downloadCallbackMap;
+	
 	public ProxyManagementComponent(Config config, MyProxy proxy) {
 		this.config = config;
 		if (!this.readConfigFile()) {
             return;
         }
 		try {
+			this.downloadCallbackMap = new ConcurrentHashMap<String,Collection<DownloadCallbackEntity>>();
 			this.proxy = proxy;
 			registry = LocateRegistry.createRegistry(proxyRMIPort);
 			proxyRMI = new ProxyRMI(this);
@@ -75,19 +84,8 @@ public class ProxyManagementComponent {
     	return proxy;
     }
     
-    protected void writeClientPublicKey(String user, byte[] key) {
-    	File keyFile = new File(keysDir+System.getProperty("file.separator")+user);
-    	try {
-    		if (!keyFile.exists()) {
-    			keyFile.createNewFile();
-    		}
-			FileOutputStream fos = new FileOutputStream(keyFile);
-			fos.write(key);
-			fos.flush();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+    protected void writeClientPublicKey(String user, PublicKey publicKey) throws IOException {
+    	MyUtils.writePublicKeyToPath(keysDir+System.getProperty("file.separator")+user+".pub.pem", publicKey);
     }
     
     protected void unexportUnicasts() {
@@ -103,5 +101,53 @@ public class ProxyManagementComponent {
 		} catch (NotBoundException e) {
 			
 		}
+    }
+    
+    protected void registerDownloadCallbackEntity(DownloadCallbackEntity entity) {
+    	Collection<DownloadCallbackEntity> col;
+    	synchronized (downloadCallbackMap) {
+	    	col = downloadCallbackMap.get(entity.fileName);
+    	}
+    	if (col==null) {
+    		col = new ArrayList<DownloadCallbackEntity>();
+    	}
+    	col.add(entity);
+    	synchronized (downloadCallbackMap) {
+    		downloadCallbackMap.put(entity.fileName, col);
+    	}
+    }
+    protected void checkDownloadCallbackEntitys(String fileName,int downloadCount) {
+    	synchronized (downloadCallbackMap) {
+	    	Collection<DownloadCallbackEntity> col = downloadCallbackMap.get(fileName);
+	    	if (col==null) {
+	    		return;
+	    	} else {
+	    		//ArrayList<DownloadCallbackEntity> removeList = new ArrayList<DownloadCallbackEntity>();
+	    		for (DownloadCallbackEntity e : col) {
+	    			if ((downloadCount-e.downloadOffset)%e.downloadLoop==0) {
+	    				try {
+							e.callback.callback("File "+fileName+" was downloaded "+e.downloadLoop+" times.");
+							//removeList.add(e);
+						} catch (RemoteException e1) {}
+	    			}
+	    		}
+	    		//col.removeAll(removeList);
+	    	}
+    	}
+    }
+    
+    protected void userLoggedOut(String userName) {
+    	synchronized (downloadCallbackMap) {
+	    	ArrayList<DownloadCallbackEntity> remove = new ArrayList<DownloadCallbackEntity>();
+	    	for (Collection<DownloadCallbackEntity> ce : downloadCallbackMap.values()) {
+	    		remove.clear();
+	    		for (DownloadCallbackEntity e : ce) {
+	    			if (userName.equals(e.userName)) {
+	    				remove.add(e);
+	    			}
+	    		}
+	    		ce.removeAll(remove);
+	    	}
+    	}
     }
 }

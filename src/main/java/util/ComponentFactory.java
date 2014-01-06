@@ -30,7 +30,7 @@ public class ComponentFactory {
     public IClientCli startClient(Config config, Shell shell) throws Exception {
         System.out.println("startClient");
         Thread shellThread = new Thread(shell);
-        IClientCli clientCli = new MyClientCli(new MyClient(config, new Config("mc")),shellThread);
+        IClientCli clientCli = new MyClientCli(new MyClient(config, new Config("mc"), shell),shellThread);
         shell.register(clientCli);
         shellThread.start();
 

@@ -1,6 +1,5 @@
 package proxy;
 
-import cli.AuthenticatedSocket;
 import cli.Shell;
 import message.Response;
 import message.request.InfoRequest;
@@ -52,7 +51,6 @@ public class MyProxy {
     private String privateKeyPath;
     private String hmacKeyPath;
     private String keysDir;
-    private byte[] proxyPublicKey;
 	private ProxyManagementComponent pmc;
 
     public static void main(String[] args) {
@@ -126,6 +124,10 @@ public class MyProxy {
      */
     public Collection<UserEntity> getUserList() {
         return userMap.values();
+    }
+    
+    public UserEntity getUser(String userName) {
+    	return userMap.get(userName);
     }
 
     /**
@@ -414,38 +416,44 @@ public class MyProxy {
     private Collection<FileserverEntity> getQuorum(boolean nR){
         int quorum = 0;
         if (nR){
-            quorum = ((int) Math.floor(fileserverMap.size() / 2.0))+1;
+            quorum = getNR();
         }else{
-            quorum = Math.max(((int) Math.ceil(fileserverMap.size() / 2.0))+1,fileserverMap.size());
+            quorum = getNW();
         }
         int counter = 0;
         Collection<FileserverEntity> list = fileserverMap.values();
         Collection<FileserverEntity> quorumlist = new ArrayList<FileserverEntity>();
+        Collection<FileserverEntity> quorumlistTemp = new ArrayList<FileserverEntity>();
         for (FileserverEntity entity1 : list) {
             if (entity1.isOnline()){
                 if (counter<quorum){
                     quorumlist.add(entity1);
                     counter++;
                 }else{
+                    if (quorumlistTemp.isEmpty()){
+                        quorumlistTemp.addAll(quorumlist);
+                    }
                     for (FileserverEntity entity : quorumlist){
                         if (entity.getUsage()>entity1.getUsage()){
-                            quorumlist.remove(entity);
-                            quorumlist.add(entity1);
+                            quorumlistTemp.remove(entity);
+                            quorumlistTemp.add(entity1);
                         }
                     }
+                    quorumlist.clear();
+                    quorumlist.addAll(quorumlistTemp);
                 }
             }
         }
         return quorumlist;
     }
     public int getNR() {
-    	return ((int) Math.floor(fileserverMap.size() / 2.0))+1;
+    	return ((int) Math.floor(fileserverMap.size() / 2.0));
     }
     public Collection<FileserverEntity> getReadQuorum(){
         return getQuorum(true);
     }
     public int getNW() {
-    	return Math.max(((int) Math.ceil(fileserverMap.size() / 2.0))+1,fileserverMap.size());
+    	return ((int) Math.floor(fileserverMap.size() / 2.0))+1;
     }
     public Collection<FileserverEntity> getWriteQuorum(){
         return getQuorum(false);
@@ -484,6 +492,7 @@ public class MyProxy {
         return ret;
     }
 
+
     private PublicKey readPublicKey(String path){
         PublicKey ret = null;
         try {
@@ -497,14 +506,16 @@ public class MyProxy {
         return ret;
     }
 
-    protected byte[] getPublicKey() {
-    	return proxyPublicKey;
+
+    protected PublicKey getPublicKey() throws IOException {
+    	return MyUtils.getPublicKeyForPath(privateKeyPath.replace(".pem", ".pub.pem"));
     }
     
     protected void registerDownload(String fileName) {
     	Integer ct = fileDownloadCountMap.get(fileName);
     	if (ct==null) {ct=0;}
     	fileDownloadCountMap.put(fileName, ++ct);
+    	pmc.checkDownloadCallbackEntitys(fileName, ct);
     }
     
     protected String[] getTop3DownloadedFiles() {
@@ -540,5 +551,10 @@ public class MyProxy {
     
     protected ProxyManagementComponent getProxyManagementComponent() {
     	return pmc;
+    }
+    
+    protected int getFileDownloadCount(String fileName) {
+    	Integer ct = fileDownloadCountMap.get(fileName);
+    	return (ct!=null ? ct : 0);
     }
 }
