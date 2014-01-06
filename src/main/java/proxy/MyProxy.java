@@ -20,6 +20,7 @@ import java.net.DatagramSocket;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map.Entry;
@@ -50,7 +51,6 @@ public class MyProxy {
     private String privateKeyPath;
     private String hmacKeyPath;
     private String keysDir;
-    private byte[] proxyPublicKey;
 	private ProxyManagementComponent pmc;
 
     public static void main(String[] args) {
@@ -481,8 +481,8 @@ public class MyProxy {
         return ret;
     }
 
-    protected byte[] getPublicKey() {
-    	return proxyPublicKey;
+    protected PublicKey getPublicKey() throws IOException {
+    	return MyUtils.getPublicKeyForPath(privateKeyPath.replace(".pem", ".pub.pem"));
     }
     
     protected void registerDownload(String fileName) {

@@ -11,12 +11,14 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
+import java.security.PublicKey;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.concurrent.ConcurrentHashMap;
 
 import util.Config;
+import util.MyUtils;
 
 public class ProxyManagementComponent {
 	private Config config;
@@ -82,19 +84,8 @@ public class ProxyManagementComponent {
     	return proxy;
     }
     
-    protected void writeClientPublicKey(String user, byte[] key) {
-    	File keyFile = new File(keysDir+System.getProperty("file.separator")+user);
-    	try {
-    		if (!keyFile.exists()) {
-    			keyFile.createNewFile();
-    		}
-			FileOutputStream fos = new FileOutputStream(keyFile);
-			fos.write(key);
-			fos.flush();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+    protected void writeClientPublicKey(String user, PublicKey publicKey) throws IOException {
+    	MyUtils.writePublicKeyToPath(keysDir+System.getProperty("file.separator")+user+".pub.pem", publicKey);
     }
     
     protected void unexportUnicasts() {
@@ -131,14 +122,16 @@ public class ProxyManagementComponent {
 	    	if (col==null) {
 	    		return;
 	    	} else {
+	    		//ArrayList<DownloadCallbackEntity> removeList = new ArrayList<DownloadCallbackEntity>();
 	    		for (DownloadCallbackEntity e : col) {
-	    			if (e.downloadLimit<=downloadCount) {
+	    			if ((downloadCount-e.downloadOffset)%e.downloadLoop==0) {
 	    				try {
-							e.callback.callback("File "+fileName+" was downloaded "+e.downloadLimit+" times.");
-							col.remove(e);
+							e.callback.callback("File "+fileName+" was downloaded "+e.downloadLoop+" times.");
+							//removeList.add(e);
 						} catch (RemoteException e1) {}
 	    			}
 	    		}
+	    		//col.removeAll(removeList);
 	    	}
     	}
     }
