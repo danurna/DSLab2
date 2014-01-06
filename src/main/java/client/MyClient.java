@@ -59,7 +59,6 @@ public class MyClient {
 
 	private Registry remoteRegistry;
 	private IProxyRMI proxyRMI;
-	private DownloadSubscriptionCallback dlsCallback;
 	
 	private Shell shell;
 
@@ -172,8 +171,6 @@ public class MyClient {
             Remote tmp = remoteRegistry.lookup(rmiBindingName);
             if (tmp instanceof IProxyRMI) {
                 proxyRMI = (IProxyRMI) tmp;
-                dlsCallback = new DownloadSubscriptionCallback(this);
-                UnicastRemoteObject.exportObject(dlsCallback, 0);
             } else {
                 return false;
             }
@@ -234,12 +231,12 @@ public class MyClient {
                 return (Response) object;
             }
 
-        } catch(EOFException e){
-            e.printStackTrace();
+        } catch (EOFException e){
+            //e.printStackTrace();
         } catch (IOException e) {
-            e.printStackTrace();
+            //e.printStackTrace();
             this.closeConnection();
-            System.out.println("Error sending request. Connections closed.");
+            //System.out.println("Error sending request. Connections closed.");
         } catch (ClassNotFoundException e) {
             //Shouldn't occur.
         }
@@ -335,15 +332,26 @@ public class MyClient {
         }
         return ret;
     }
-
-
-    protected void unexportUnicasts() {
-    	try {
-			UnicastRemoteObject.unexportObject(dlsCallback, true);
-		} catch (NoSuchObjectException e) {}
-    }
     
     public Shell getShell() {
     	return shell;
+    }
+    
+    public void setProxyPublicKey(PublicKey publicKey) {
+    	this.proxyPubKey = publicKey;
+    	try {
+			MyUtils.writePublicKeyToPath(this.proxyPubKeyPath, publicKey);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+    }
+    
+    public PublicKey getClientPublicKey(String userName) {
+    	try {
+			return MyUtils.getPublicKeyForPath(keysDir+System.getProperty("file.seperator")+userName+".pub.pem");
+		} catch (IOException e) {
+			e.printStackTrace();
+			return null;
+		}
     }
 }

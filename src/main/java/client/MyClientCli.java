@@ -13,6 +13,7 @@ import java.io.File;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
+import java.security.PublicKey;
 import java.util.Collection;
 
 /**
@@ -129,7 +130,7 @@ public class MyClientCli implements IClientCli {
     @Command
     public MessageResponse exit() throws IOException {
     	shellThread.interrupt();
-    	client.unexportUnicasts();
+    	UnicastRemoteObject.unexportObject(dlsCallback, true);
     	
         if (client.isConnected()) {
         	try {
@@ -197,7 +198,42 @@ public class MyClientCli implements IClientCli {
 			return new MessageResponse("A connection error occured. Please try again later.");
 		}
     }
-
+    
+    @Command
+    @Override
+    public MessageResponse getProxyPublicKey() {
+    	try {
+    		PublicKey key = client.getProxyRMI().getProxyPublicKey();
+    		if (key==null) {
+    			return new MessageResponse("Getting key failed. Please try again later.");
+    		}
+    		client.setProxyPublicKey(key);
+	    	return new MessageResponse("Successfully received public key of Proxy.");
+		} catch (RemoteException e) {
+			e.printStackTrace();
+			return new MessageResponse("A connection error occured. Please try again later.");
+		}
+    }
+    
+    @Command
+    @Override
+    public MessageResponse setUserPublicKey(String userName) {
+    	try {
+    		PublicKey key = client.getClientPublicKey(userName);
+    		if (key==null) {
+    			return new MessageResponse("Public key for user "+userName+" not found!");
+    		}
+    		boolean success = client.getProxyRMI().setClientPublicKey(userName, key);
+    		if (!success) {
+    			return new MessageResponse("Sending key failed. Please try again later.");
+    		}
+	    	return new MessageResponse("Successfully received public key of Proxy.");
+		} catch (RemoteException e) {
+			e.printStackTrace();
+			return new MessageResponse("A connection error occured. Please try again later.");
+		}
+    }
+    
     //Private helper that tries to connect, if not already connected.
     private boolean isConnected() {
         if (client.isConnected()) {

@@ -1,6 +1,8 @@
 package proxy;
 
+import java.io.IOException;
 import java.rmi.RemoteException;
+import java.security.PublicKey;
 import java.util.Collection;
 
 import client.IStringCallback;
@@ -37,18 +39,27 @@ public class ProxyRMI implements IProxyRMI {
 			return "Please login first.";
 		}
 		int count = pmc.getProxy().getFileDownloadCount(fileName);
-		pmc.registerDownloadCallbackEntity(new DownloadCallbackEntity(fileName, userName, count+downloadLimit, callback));
+		pmc.registerDownloadCallbackEntity(new DownloadCallbackEntity(fileName, userName, count, downloadLimit, callback));
 		return "Successfully subscribed for file: "+fileName;
 	}
 
 	@Override
-	public byte[] getProxyPublicKey() throws RemoteException {
-		return pmc.getProxy().getPublicKey();
+	public PublicKey getProxyPublicKey() throws RemoteException {
+		try {
+			return pmc.getProxy().getPublicKey();
+		} catch (IOException e) {
+			return null;
+		}
 	}
 
 	@Override
-	public void setClientPublicKey(String user, byte[] key) throws RemoteException {
-		pmc.writeClientPublicKey(user, key);
+	public boolean setClientPublicKey(String user, PublicKey publicKey) throws RemoteException {
+		try {
+			pmc.writeClientPublicKey(user, publicKey);
+			return true;
+		} catch (IOException e) {
+			return false;
+		}
 	}
 
 }

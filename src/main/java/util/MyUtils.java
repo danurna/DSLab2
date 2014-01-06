@@ -9,6 +9,7 @@ import java.util.Set;
 
 import org.bouncycastle.util.encoders.Base64;
 import org.bouncycastle.openssl.PEMReader;
+import org.bouncycastle.openssl.PEMWriter;
 import org.bouncycastle.openssl.PasswordFinder;
 
 import javax.crypto.KeyGenerator;
@@ -123,6 +124,19 @@ public class MyUtils {
         PEMReader in = new PEMReader(new FileReader(path));
         PublicKey publicKey = (PublicKey) in.readObject();
         return publicKey;
+    }
+    
+    /**
+     * Write PEM formatted RSA public key.
+     * @param path - Path to pem file
+     * @return publicKey
+     * @throws IOException
+     */
+    public static void writePublicKeyToPath(String path, PublicKey key) throws IOException {
+        PEMWriter wr = new PEMWriter(new PrintWriter(new File(path)));
+        wr.writeObject(key);
+    	wr.flush();
+    	wr.close();
     }
 
     /**
