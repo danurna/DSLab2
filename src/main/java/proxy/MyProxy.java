@@ -413,7 +413,7 @@ public class MyProxy {
         if (nR){
             quorum = ((int) Math.floor(fileserverMap.size() / 2.0))+1;
         }else{
-            quorum = Math.max(((int) Math.ceil(fileserverMap.size() / 2.0))+1,fileserverMap.size());
+            quorum = Math.min(((int) Math.ceil(fileserverMap.size() / 2.0))+1,fileserverMap.size());
         }
         int counter = 0;
         Collection<FileserverEntity> list = fileserverMap.values();
@@ -442,7 +442,7 @@ public class MyProxy {
         return getQuorum(true);
     }
     public int getNW() {
-    	return Math.max(((int) Math.ceil(fileserverMap.size() / 2.0))+1,fileserverMap.size());
+    	return Math.min(((int) Math.ceil(fileserverMap.size() / 2.0))+1,fileserverMap.size());
     }
     public Collection<FileserverEntity> getWriteQuorum(){
         return getQuorum(false);
