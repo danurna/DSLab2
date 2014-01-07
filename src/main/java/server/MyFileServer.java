@@ -10,6 +10,7 @@ import util.MyUtils;
 import java.io.File;
 import java.io.IOException;
 import java.net.*;
+import java.security.Key;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -35,6 +36,8 @@ public class MyFileServer {
     private int proxyUdpPort;
     private String proxyAdress;
     private String fsDir;
+    private String secretKeyPath;
+    private Key secretKey;
     //Version hashMap
     private HashMap<String, Integer> versionMap;
 
@@ -50,6 +53,11 @@ public class MyFileServer {
         this.createSockets();
         this.createSendAliveThread();
         this.initVersionsMap();
+        try {
+            secretKey = MyUtils.readSecretKeybyPath(secretKeyPath);
+        } catch (IOException e) {
+            //lalala
+        }
     }
 
     /**
@@ -64,6 +72,7 @@ public class MyFileServer {
             fsAlive = config.getInt("fileserver.alive");
             proxyAdress = config.getString("proxy.host");
             fsDir = config.getString("fileserver.dir");
+            secretKeyPath = config.getString("hmac.key");
         } catch (Exception e) {
             System.err.println("Something went wrong on reading Fileserver properties.\n" +
                     "Please provide information like this:\nKey=YourRealValue \ntcp.port=12345\n" +
@@ -129,6 +138,11 @@ public class MyFileServer {
                             address = InetAddress.getByName(proxyAdress);
                             String s = "!isAlive " + tcpPort;
                             byte[] buf = s.getBytes();
+                            Key secretKey = MyUtils.readSecretKeybyPath(secretKeyPath);
+                            byte[] hash = MyUtils.generateHash(secretKey, buf);
+                            String hashString = new String(hash);
+                            s = hashString + " " + s;
+                            buf = s.getBytes();
                             if (toSocket == null)
                                 toSocket = new DatagramSocket();
                             DatagramPacket packet = new DatagramPacket(buf, buf.length, address, proxyUdpPort);

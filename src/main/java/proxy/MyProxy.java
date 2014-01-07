@@ -19,6 +19,8 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.ArrayList;
@@ -239,6 +241,7 @@ public class MyProxy {
         Runnable serverKeepAliveListen = new Runnable() {
             @Override
             public void run() {
+                //TODO: compare
                 DatagramSocket datagramSocket = null;
                 try {
                     datagramSocket = new DatagramSocket(udpPort);
@@ -256,6 +259,10 @@ public class MyProxy {
                         handleReceivedPacket(packet);
                     } catch (IOException e) {
                         //Exception on receive. Thrown if socket is closed.
+                    } catch (NoSuchAlgorithmException e) {
+                        e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                    } catch (InvalidKeyException e) {
+                        e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
                     }
                 }
 
@@ -306,22 +313,31 @@ public class MyProxy {
      *
      * @param packet Received UDP packet to handle.
      */
-    public synchronized void handleReceivedPacket(DatagramPacket packet) {
+    public synchronized void handleReceivedPacket(DatagramPacket packet) throws IOException, InvalidKeyException, NoSuchAlgorithmException {
         String received = new String(packet.getData(), 0, packet.getLength());
         String splitString[] = received.split("\\ ");
 
-        if (splitString.length != 2) {
+        if (splitString.length != 3) {
             return;
         }
 
-        if (splitString[0].equals("!isAlive")) {
-            String key = splitString[1];
-            if (!fileserverMap.containsKey(key)) {
-                fileserverMap.put(key, new FileserverEntity(packet.getAddress(), Integer.parseInt(key), 0, true));
-            } else {
-                fileserverMap.get(key).updateLastAliveTime();
-                fileserverMap.get(key).setOnline(true);
+        String withoutHash = splitString[1]+" "+splitString[2];
+        boolean validHash = false;
+        validHash = MyUtils.compareHash(MyUtils.readSecretKeybyPath(hmacKeyPath),splitString[0].getBytes(),withoutHash.getBytes());
+
+        if (validHash){
+            if (splitString[1].equals("!isAlive")) {
+                String key = splitString[2];
+                if (!fileserverMap.containsKey(key)) {
+                    fileserverMap.put(key, new FileserverEntity(packet.getAddress(), Integer.parseInt(key), 0, true));
+                } else {
+                    fileserverMap.get(key).updateLastAliveTime();
+                    fileserverMap.get(key).setOnline(true);
+                }
             }
+        }else{
+            //TODO Standard Output
+            System.out.println(received+ " generated Hash: "+ new String(MyUtils.generateHash(MyUtils.readSecretKeybyPath(hmacKeyPath),withoutHash.getBytes())));
         }
 
     }
@@ -356,6 +372,7 @@ public class MyProxy {
      * @return least used and online fileserver of given list.
      */
     private FileserverEntity getLeastUsedFileserverFromList(Collection<FileserverEntity> list) {
+        //TODO
         FileserverEntity entity = null;
 
         for (FileserverEntity entity1 : list) {

@@ -11,9 +11,12 @@ import org.bouncycastle.util.encoders.Base64;
 import org.bouncycastle.openssl.PEMReader;
 import org.bouncycastle.openssl.PEMWriter;
 import org.bouncycastle.openssl.PasswordFinder;
+import org.bouncycastle.util.encoders.Hex;
 
 import javax.crypto.KeyGenerator;
+import javax.crypto.Mac;
 import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 
 /**
  * Created with IntelliJ IDEA.
@@ -222,6 +225,27 @@ public class MyUtils {
         return key;
     }
 
+    public static Key readSecretKeybyPath(String pathToSecretKey) throws IOException {
+        byte[] keyBytes = new byte[1024];
+        FileInputStream fis = new FileInputStream(pathToSecretKey);
+        fis.read(keyBytes);
+        fis.close();
+        byte[] input = Hex.decode(keyBytes);
+        Key key = new SecretKeySpec(input,"HmacSHA256");
+        return key;
+    }
 
+    public static byte[] generateHash(Key secretKey, byte[] message) throws NoSuchAlgorithmException, InvalidKeyException {
+
+        Mac hMac = Mac.getInstance("HmacSHA256");
+        hMac.init(secretKey);
+        hMac.update(message);
+        return base64encodeBytes(hMac.doFinal());
+    }
+
+    public static boolean compareHash(Key secretKey, byte[] receivedHash, byte[] message) throws NoSuchAlgorithmException, InvalidKeyException {
+
+        return MessageDigest.isEqual(receivedHash,generateHash(secretKey, message));
+    }
 
 }
