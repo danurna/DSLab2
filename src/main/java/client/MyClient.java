@@ -17,13 +17,11 @@ import util.MyUtils;
 import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
-import java.rmi.NoSuchObjectException;
 import java.rmi.NotBoundException;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
-import java.rmi.server.UnicastRemoteObject;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.HashMap;
@@ -213,15 +211,16 @@ public class MyClient {
         //If login request, we need to authenticate first.
         if(request instanceof LoginRequest){
             clientPrivateKey = readPrivateKey(keysDir+"/"+((LoginRequest) request).getUsername()+".pem");
+            if(clientPrivateKey == null){
+                return null;
+            }
             tcpChannel = new RSAChannelEncryption(originalTcpChannel, clientPrivateKey, proxyPubKey);
         }
 
         try {
             tcpChannel.writeObject(request);
-            //System.out.println("CLIENT WROTE AN OBJECT: " + request);
-
             Object object = tcpChannel.readObject();
-            //System.out.println("CLIENT READ AN OBJECT: " + object);
+
             if (object instanceof Response) {
                 return (Response) object;
             }
@@ -325,7 +324,7 @@ public class MyClient {
             ret = MyUtils.getPrivateKeyForPathAndPassword(path, pw);
         } catch (IOException e) {
             //Wrong usage or file does not exist.
-            System.err.println("Something went wrong on reading user's private key.\n");
+            System.err.println("No private key for user found.");
             return null;
         }
         return ret;
