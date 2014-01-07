@@ -464,7 +464,7 @@ public class MyProxy {
         return quorumlist;
     }
     public int getNR() {
-    	return ((int) Math.floor(fileserverMap.size() / 2.0));
+    	return ((int) Math.ceil(fileserverMap.size() / 2.0));
     }
     public Collection<FileserverEntity> getReadQuorum(){
         return getQuorum(true);
