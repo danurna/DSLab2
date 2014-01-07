@@ -28,7 +28,9 @@ public class ClientProxyBridge implements IProxy, Runnable {
     private Socket clientSocket;
     private UserEntity currentUser;
     private MyProxy myProxy;
+    private String keysDirectoryPath;
     private PrivateKey privateKey;
+    private TCPChannel channel;
 
     public ClientProxyBridge(Socket clientSocket, MyProxy myProxy) {
         this.clientSocket = clientSocket;
@@ -168,25 +170,40 @@ public class ClientProxyBridge implements IProxy, Runnable {
         
         myProxy.getProxyManagementComponent().userLoggedOut(currentUser.getName());
 
+        //Log user out.
+        currentUser = null;
+
         return new MessageResponse(loggedIn ? "Logout failed" : "Successfully logged out.");
     }
 
     @Override
     public void run() {
-        TCPChannel channel = new TCPChannel();
-        //channel = new RSAChannelEncryption(channel, privateKey, null);
+        channel = new TCPChannel();
+        //Use proxy's private key and give path to keys directory, because
+        //depending on client's request we use different public keys.
+        channel = new RSAChannelEncryption(channel, privateKey, keysDirectoryPath, false);
 
         try {
             channel.setStreamsForSocket(clientSocket);
 
             Object obj;
             while ((obj = channel.readObject()) != null && !Thread.currentThread().isInterrupted()) {
+                //System.out.println("PROXY READ AN OBJECT: " + obj);
                 Response response = performRequest(obj);
 
-                if (response == null)
-                    return;
+                if (response != null){
+                    //System.out.println("PROXY WROTE AN OBJECT: " + response);
+                    channel.writeObject(response);
+                }
 
-                channel.writeObject(response);
+                if( currentUser == null){
+                    //If Authentication/Encryption is in use, we need to tell the channel
+                    //to reset.
+                    if(channel instanceof RSAChannelEncryption){
+                        ((RSAChannelEncryption) channel).reset();
+                    }
+                }
+
             }
 
         } catch (EOFException e) {
@@ -194,12 +211,13 @@ public class ClientProxyBridge implements IProxy, Runnable {
         } catch (SocketException e) {
             System.out.println("Socket to client closed!");
         } catch (IOException e) {
-            e.printStackTrace();
+            //Will occur in case of failed authentication. No problem.
         } catch (ClassNotFoundException e) {
-            e.printStackTrace();
+           //Won't occur.
         } finally {
             //Cleanup
             try {
+                System.out.println("Closing connection on proxy side!");
                 channel.close();
                 clientSocket.close();
             } catch (IOException e) {
@@ -291,5 +309,9 @@ public class ClientProxyBridge implements IProxy, Runnable {
 
     public void setPrivateKey(PrivateKey privateKey){
         this.privateKey = privateKey;
+    }
+
+    public void setKeysDirectoryPath(String keysDirectoryPath) {
+        this.keysDirectoryPath = keysDirectoryPath;
     }
 }
