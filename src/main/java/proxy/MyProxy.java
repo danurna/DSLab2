@@ -309,6 +309,7 @@ public class MyProxy {
         ClientProxyBridge clientProxyBridge = new ClientProxyBridge(clientSocket, this);
         clientProxyBridge.setPrivateKey(privateKey);
         clientProxyBridge.setKeysDirectoryPath(keysDir);
+        clientProxyBridge.setHmacKey(hmacKeyPath);
         executor.execute(clientProxyBridge);
     }
 

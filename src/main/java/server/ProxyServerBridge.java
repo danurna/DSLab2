@@ -1,16 +1,19 @@
 package server;
 
+import message.Request;
 import message.Response;
 import message.request.*;
 import message.response.DownloadFileResponse;
 import message.response.ListResponse;
 import message.response.MessageResponse;
+import message.response.SecureResponse;
 import model.DownloadTicket;
 import util.MyUtils;
 
 import java.io.*;
 import java.net.Socket;
 import java.net.SocketException;
+import java.security.Key;
 
 /**
  * For each connection the fileserver receives, it creates a new ProxyServerBridge
@@ -19,6 +22,7 @@ import java.net.SocketException;
 public class ProxyServerBridge implements IFileServer, Runnable {
     private final Socket socket;
     private final MyFileServer server;
+    private Key hmacKey;
 
     public ProxyServerBridge(Socket socket, MyFileServer server) {
         this.socket = socket;
@@ -36,11 +40,20 @@ public class ProxyServerBridge implements IFileServer, Runnable {
 
             Object obj;
             while ((obj = objectIn.readObject()) != null) { //EOF Exception
+                if (obj instanceof SecureRequest){
+                    if (MyUtils.compareHash(hmacKey,((SecureRequest) obj).getHash(),((SecureRequest) obj).getRequest().toString().getBytes())){
+                        //TODO IDONT KNOW
+                    }
+                    obj = ((SecureRequest) obj).getRequest();
+                }
                 Response response = performRequest(obj);
 
                 if (response == null)
                     response = new MessageResponse("");
-
+                if(!(response instanceof DownloadFileResponse)){
+                    byte[] hash = MyUtils.generateHash(hmacKey,response.toString().getBytes());
+                    response = new SecureResponse(hash,response);
+                }
                 objectOut.writeObject(response);
                 objectOut.flush();
                 break;
@@ -106,9 +119,8 @@ public class ProxyServerBridge implements IFileServer, Runnable {
      * @return
      * @throws IOException
      */
-    private Response performRequest(Object obj) throws IOException {
+    private Response performRequest(Object obj) throws IOException{
         Response response = null;
-
         if (obj instanceof ListRequest) {
             response = list();
         } else if (obj instanceof DownloadFileRequest) {
@@ -121,8 +133,8 @@ public class ProxyServerBridge implements IFileServer, Runnable {
             response = upload((UploadRequest) obj);
         } else if (obj instanceof MessageResponse) {
             response = (MessageResponse) obj;
-        }
-
+        }else
+            //TODO
         if (response == null) {
             response = new MessageResponse("No valid request sent.");
         }
@@ -145,4 +157,11 @@ public class ProxyServerBridge implements IFileServer, Runnable {
         }
     }
 
+    public void setHmacKey(String secretKeyPath){
+        try {
+            hmacKey = MyUtils.readSecretKeybyPath(secretKeyPath);
+        } catch (IOException e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        }
+    }
 }

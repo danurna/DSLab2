@@ -9,6 +9,7 @@ import model.FileserverEntity;
 import model.UserEntity;
 import server.FileserverRequest;
 import util.ChecksumUtils;
+import util.MyUtils;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -16,6 +17,9 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.SocketException;
+import java.security.InvalidKeyException;
+import java.security.Key;
+import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.util.HashSet;
 import java.util.Set;
@@ -30,6 +34,7 @@ public class ClientProxyBridge implements IProxy, Runnable {
     private MyProxy myProxy;
     private String keysDirectoryPath;
     private PrivateKey privateKey;
+    private Key hmacKey;
     private TCPChannel channel;
 
     public ClientProxyBridge(Socket clientSocket, MyProxy myProxy) {
@@ -275,11 +280,20 @@ public class ClientProxyBridge implements IProxy, Runnable {
         return response;
     }
 
-    //Establishs connection to fileserver and performs given request.
+    //Establishes connection to fileserver and performs given request.
     private Response performFileserverRequest(Request request, FileserverEntity entity) throws IOException {
         ObjectOutputStream objectOut = null;
         ObjectInputStream objectIn = null;
         Object obj = null;
+        byte[] hash = null;
+        try {
+            hash = MyUtils.generateHash(hmacKey,(request.toString()).getBytes());
+        } catch (NoSuchAlgorithmException e) {
+            //IMPOSSIBLE
+        } catch (InvalidKeyException e) {
+            //TODO
+        }
+        request = new SecureRequest(hash,request);
 
         try {
             Socket socket = new Socket(entity.getAddress(), entity.getPort());
@@ -300,10 +314,26 @@ public class ClientProxyBridge implements IProxy, Runnable {
         }
 
         if (obj != null && obj instanceof Response) {
+
+            if (obj instanceof SecureResponse){
+                try {
+                    if (MyUtils.compareHash(hmacKey,((SecureResponse) obj).getHash(),((((SecureResponse) obj).getResponse()).toString()).getBytes())){
+
+                }else{
+                    //TODO
+                }
+                } catch (NoSuchAlgorithmException e) {
+                    e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                } catch (InvalidKeyException e) {
+                    e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                }
+                return ((SecureResponse) obj).getResponse();
+            }
+            System.out.println("Not a secure Response?"+((Response) obj).toString());
             return (Response) obj;
         }
 
-        return null;
+            return null;
     }
 
 
@@ -313,5 +343,12 @@ public class ClientProxyBridge implements IProxy, Runnable {
 
     public void setKeysDirectoryPath(String keysDirectoryPath) {
         this.keysDirectoryPath = keysDirectoryPath;
+    }
+    public void setHmacKey(String secretKeyPath){
+        try {
+            hmacKey = MyUtils.readSecretKeybyPath(secretKeyPath);
+        } catch (IOException e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        }
     }
 }

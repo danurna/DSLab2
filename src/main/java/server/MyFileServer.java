@@ -120,6 +120,7 @@ public class MyFileServer {
 
     private void handleConnection(Socket socket) {
         ProxyServerBridge ProxyServerBridge = new ProxyServerBridge(socket, this);
+        ProxyServerBridge.setHmacKey(secretKeyPath);
         executor.execute(ProxyServerBridge);
     }
 
