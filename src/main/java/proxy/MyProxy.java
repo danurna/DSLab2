@@ -526,19 +526,19 @@ public class MyProxy {
     	String lowest[] = {"None","None","None"};
     	int lowestVal[] = {Integer.MAX_VALUE,Integer.MAX_VALUE,Integer.MAX_VALUE};
     	for (Entry<String,Integer> e : fileDownloadCountMap.entrySet()) {
-    		if (e.getValue()<lowestVal[0]) {
+    		if (e.getValue()>lowestVal[0]) {
     			lowestVal[2] = lowestVal[1];
     			lowestVal[1] = lowestVal[0];
     			lowestVal[0] = e.getValue();
     			lowest[2] = lowest[1];
     			lowest[1] = lowest[0];
     			lowest[0] = e.getKey();
-    		} else if (e.getValue()<lowestVal[1]) {
+    		} else if (e.getValue()>lowestVal[1]) {
     			lowestVal[2] = lowestVal[1];
     			lowestVal[1] = e.getValue();
     			lowest[2] = lowest[1];
     			lowest[1] = e.getKey();
-    		} else if (e.getValue()<lowestVal[2]) {
+    		} else if (e.getValue()>lowestVal[2]) {
     			lowestVal[2] = e.getValue();
     			lowest[2] = e.getKey();
     		}
