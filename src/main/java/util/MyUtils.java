@@ -1,22 +1,21 @@
 package util;
 
-import java.io.*;
-import java.security.*;
-import java.sql.Timestamp;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-
-import org.bouncycastle.util.encoders.Base64;
 import org.bouncycastle.openssl.PEMReader;
 import org.bouncycastle.openssl.PEMWriter;
 import org.bouncycastle.openssl.PasswordFinder;
+import org.bouncycastle.util.encoders.Base64;
 import org.bouncycastle.util.encoders.Hex;
 
 import javax.crypto.KeyGenerator;
 import javax.crypto.Mac;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
+import java.io.*;
+import java.security.*;
+import java.sql.Timestamp;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Created with IntelliJ IDEA.
@@ -155,7 +154,7 @@ public class MyUtils {
             @Override
             public char[] getPassword() {
                 // reads the password from standard input for decrypting the private key
-                System.out.println("Enter pass phrase:");
+                System.out.println("Enter private key pass phrase:");
                 try {
                     InputStreamReader isr = new InputStreamReader(System.in);
                     BufferedReader bf = new BufferedReader(isr);
