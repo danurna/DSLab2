@@ -289,9 +289,7 @@ public class ClientProxyBridge implements IProxy, Runnable {
         try {
             hash = MyUtils.generateHash(hmacKey,(request.toString()).getBytes());
         } catch (NoSuchAlgorithmException e) {
-            //IMPOSSIBLE
         } catch (InvalidKeyException e) {
-            //TODO
         }
         request = new SecureRequest(hash,request);
 
@@ -322,9 +320,7 @@ public class ClientProxyBridge implements IProxy, Runnable {
                         performFileserverRequest(request,entity);
                     }
                 } catch (NoSuchAlgorithmException e) {
-                    e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
                 } catch (InvalidKeyException e) {
-                    e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
                 }
                 return ((SecureResponse) obj).getResponse();
             }else if(obj instanceof HashErrorResponse){
@@ -334,7 +330,7 @@ public class ClientProxyBridge implements IProxy, Runnable {
             return (Response) obj;
         }
 
-            return null;
+        return null;
     }
 
 

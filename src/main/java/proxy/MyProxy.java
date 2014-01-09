@@ -245,7 +245,6 @@ public class MyProxy {
         Runnable serverKeepAliveListen = new Runnable() {
             @Override
             public void run() {
-                //TODO: compare
                 DatagramSocket datagramSocket = null;
                 try {
                     datagramSocket = new DatagramSocket(udpPort);

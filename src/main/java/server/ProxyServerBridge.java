@@ -40,12 +40,10 @@ public class ProxyServerBridge implements IFileServer, Runnable {
                 Response response = null;
                 if (obj instanceof SecureRequest){
                     if (!MyUtils.compareHash(hmacKey,((SecureRequest) obj).getHash(),((SecureRequest) obj).getRequest().toString().getBytes())){
-                        //TODO
                         System.out.println(obj.toString());
                         response = new HashErrorResponse();
                     }else{
                         obj = ((SecureRequest) obj).getRequest();
-
                     }
                 }
                 if (response == null){
@@ -138,7 +136,7 @@ public class ProxyServerBridge implements IFileServer, Runnable {
         } else if (obj instanceof MessageResponse) {
             response = (MessageResponse) obj;
         }else
-            //TODO
+            //
         if (response == null) {
             response = new MessageResponse("No valid request sent.");
         }
