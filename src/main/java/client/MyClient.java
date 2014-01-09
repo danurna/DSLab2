@@ -344,7 +344,7 @@ public class MyClient {
     
     public PublicKey getClientPublicKey(String userName) {
     	try {
-			return MyUtils.getPublicKeyForPath(keysDir+System.getProperty("file.seperator")+userName+".pub.pem");
+			return MyUtils.getPublicKeyForPath(keysDir+System.getProperty("file.separator")+userName+".pub.pem");
 		} catch (IOException e) {
 			e.printStackTrace();
 			return null;
