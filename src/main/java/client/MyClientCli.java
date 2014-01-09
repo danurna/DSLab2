@@ -137,7 +137,7 @@ public class MyClientCli implements IClientCli {
     public MessageResponse exit() throws IOException {
     	shellThread.interrupt();
 
-        if(dlsCallback == null)
+        if(dlsCallback != null)
     	    UnicastRemoteObject.unexportObject(dlsCallback, true);
     	
         if (client.isConnected()) {
