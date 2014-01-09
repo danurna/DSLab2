@@ -317,19 +317,20 @@ public class ClientProxyBridge implements IProxy, Runnable {
 
             if (obj instanceof SecureResponse){
                 try {
-                    if (MyUtils.compareHash(hmacKey,((SecureResponse) obj).getHash(),((((SecureResponse) obj).getResponse()).toString()).getBytes())){
-
-                }else{
-                    //TODO
-                }
+                    if (!MyUtils.compareHash(hmacKey,((SecureResponse) obj).getHash(),((((SecureResponse) obj).getResponse()).toString()).getBytes())){
+                        System.out.println(((Response) obj).toString());
+                        performFileserverRequest(request,entity);
+                    }
                 } catch (NoSuchAlgorithmException e) {
                     e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
                 } catch (InvalidKeyException e) {
                     e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
                 }
                 return ((SecureResponse) obj).getResponse();
+            }else if(obj instanceof HashErrorResponse){
+                performFileserverRequest(request,entity);
             }
-            System.out.println("Not a secure Response?"+((Response) obj).toString());
+
             return (Response) obj;
         }
 

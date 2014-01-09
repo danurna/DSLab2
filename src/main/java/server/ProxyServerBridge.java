@@ -3,10 +3,7 @@ package server;
 import message.Request;
 import message.Response;
 import message.request.*;
-import message.response.DownloadFileResponse;
-import message.response.ListResponse;
-import message.response.MessageResponse;
-import message.response.SecureResponse;
+import message.response.*;
 import model.DownloadTicket;
 import util.MyUtils;
 
@@ -40,13 +37,20 @@ public class ProxyServerBridge implements IFileServer, Runnable {
 
             Object obj;
             while ((obj = objectIn.readObject()) != null) { //EOF Exception
+                Response response = null;
                 if (obj instanceof SecureRequest){
-                    if (MyUtils.compareHash(hmacKey,((SecureRequest) obj).getHash(),((SecureRequest) obj).getRequest().toString().getBytes())){
-                        //TODO IDONT KNOW
+                    if (!MyUtils.compareHash(hmacKey,((SecureRequest) obj).getHash(),((SecureRequest) obj).getRequest().toString().getBytes())){
+                        //TODO
+                        System.out.println(obj.toString());
+                        response = new HashErrorResponse();
+                    }else{
+                        obj = ((SecureRequest) obj).getRequest();
+
                     }
-                    obj = ((SecureRequest) obj).getRequest();
                 }
-                Response response = performRequest(obj);
+                if (response == null){
+                    response = performRequest(obj);
+                }
 
                 if (response == null)
                     response = new MessageResponse("");

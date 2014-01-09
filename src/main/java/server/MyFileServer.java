@@ -139,10 +139,6 @@ public class MyFileServer {
                             address = InetAddress.getByName(proxyAdress);
                             String s = "!isAlive " + tcpPort;
                             byte[] buf = s.getBytes();
-                            Key secretKey = MyUtils.readSecretKeybyPath(secretKeyPath);
-                            byte[] hash = MyUtils.generateHash(secretKey, buf);
-                            String hashString = new String(hash);
-                            s = hashString + " " + s;
                             buf = s.getBytes();
                             if (toSocket == null)
                                 toSocket = new DatagramSocket();
