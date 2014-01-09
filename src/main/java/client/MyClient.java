@@ -125,7 +125,6 @@ public class MyClient {
 
         try {
             proxyPubKey =  MyUtils.getPublicKeyForPath(proxyPubKeyPath);
-            throw new IOException("bal");
         } catch (IOException e) {
             System.err.println("Could not read proxy's public key. Authentication won't work without it.");
             proxyPubKey = null;
@@ -234,7 +233,6 @@ public class MyClient {
 
         } catch (IOException e){
             this.closeConnection();
-            //System.out.println("Error sending request. Connections closed.");
         } catch (ClassNotFoundException e) {
             //Shouldn't occur.
         }
