@@ -1,8 +1,9 @@
 package proxy;
 
+import util.Config;
+import util.MyUtils;
+
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.rmi.AccessException;
 import java.rmi.NoSuchObjectException;
@@ -14,11 +15,7 @@ import java.rmi.server.UnicastRemoteObject;
 import java.security.PublicKey;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedList;
 import java.util.concurrent.ConcurrentHashMap;
-
-import util.Config;
-import util.MyUtils;
 
 public class ProxyManagementComponent {
 	private Config config;
@@ -122,16 +119,16 @@ public class ProxyManagementComponent {
 	    	if (col==null) {
 	    		return;
 	    	} else {
-	    		//ArrayList<DownloadCallbackEntity> removeList = new ArrayList<DownloadCallbackEntity>();
+
 	    		for (DownloadCallbackEntity e : col) {
 	    			if ((downloadCount-e.downloadOffset)%e.downloadLoop==0) {
 	    				try {
-							e.callback.callback("File "+fileName+" was downloaded "+e.downloadLoop+" times.");
-							//removeList.add(e);
+							e.callback.callback("Notification: "+fileName+" got downloaded "+e.downloadLoop+" times!");
+
 						} catch (RemoteException e1) {}
 	    			}
 	    		}
-	    		//col.removeAll(removeList);
+
 	    	}
     	}
     }
