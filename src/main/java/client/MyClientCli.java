@@ -235,7 +235,7 @@ public class MyClientCli implements IClientCli {
     		if (!success) {
     			return new MessageResponse("Sending key failed. Please try again later.");
     		}
-	    	return new MessageResponse("Successfully received public key of Proxy.");
+	    	return new MessageResponse("Successfully transmitted public key of user: "+userName+".");
 		} catch (RemoteException e) {
 			e.printStackTrace();
 			return new MessageResponse("A connection error occured. Please try again later.");

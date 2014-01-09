@@ -38,7 +38,7 @@ public class ProxyRMI implements IProxyRMI {
 		if (user == null || !user.isOnline()) {
 			return "Please login first.";
 		}
-		int count = pmc.getProxy().getFileDownloadCount(fileName);
+		int count = 0;//pmc.getProxy().getFileDownloadCount(fileName);
 		pmc.registerDownloadCallbackEntity(new DownloadCallbackEntity(fileName, userName, count, downloadLimit, callback));
 		return "Successfully subscribed for file: "+fileName;
 	}

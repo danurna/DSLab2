@@ -523,7 +523,7 @@ public class MyProxy {
     
     protected String[] getTop3DownloadedFiles() {
     	String lowest[] = {"None","None","None"};
-    	int lowestVal[] = {Integer.MAX_VALUE,Integer.MAX_VALUE,Integer.MAX_VALUE};
+    	int lowestVal[] = {Integer.MIN_VALUE,Integer.MIN_VALUE,Integer.MIN_VALUE};
     	for (Entry<String,Integer> e : fileDownloadCountMap.entrySet()) {
     		if (e.getValue()>lowestVal[0]) {
     			lowestVal[2] = lowestVal[1];
@@ -543,7 +543,7 @@ public class MyProxy {
     		}
     	}
     	for (int i=0;i<3;i++) {
-    		if (lowestVal[i]!=Integer.MAX_VALUE) {
+    		if (lowestVal[i]!=Integer.MIN_VALUE) {
     			lowest[i] = "\n"+(i+1)+".\t"+lowest[i]+"\t"+lowestVal[i];
     		} else {
     			lowest[i] = "";
