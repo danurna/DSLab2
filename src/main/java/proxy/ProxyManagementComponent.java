@@ -122,16 +122,16 @@ public class ProxyManagementComponent {
 	    	if (col==null) {
 	    		return;
 	    	} else {
-	    		//ArrayList<DownloadCallbackEntity> removeList = new ArrayList<DownloadCallbackEntity>();
+	    		ArrayList<DownloadCallbackEntity> removeList = new ArrayList<DownloadCallbackEntity>();
 	    		for (DownloadCallbackEntity e : col) {
 	    			if ((downloadCount-e.downloadOffset)%e.downloadLoop==0) {
 	    				try {
 							e.callback.callback("File "+fileName+" was downloaded "+e.downloadLoop+" times.");
-							//removeList.add(e);
+							removeList.add(e);
 						} catch (RemoteException e1) {}
 	    			}
 	    		}
-	    		//col.removeAll(removeList);
+	    		col.removeAll(removeList);
 	    	}
     	}
     }
