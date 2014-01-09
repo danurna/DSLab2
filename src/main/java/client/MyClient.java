@@ -315,13 +315,7 @@ public class MyClient {
     private PrivateKey readPrivateKey(String path){
         PrivateKey ret = null;
         try {
-            //TODO: Change to productive code for Abgabe.
-            //ret = MyUtils.getPrivateKeyForPath(path);
-            String pw = "12345";
-            if(path.equals("keys/bill.pem")){
-                pw = "23456";
-            }
-            ret = MyUtils.getPrivateKeyForPathAndPassword(path, pw);
+            ret = MyUtils.getPrivateKeyForPath(path);
         } catch (IOException e) {
             //Wrong usage or file does not exist.
             System.err.println("No private key for user found.");
