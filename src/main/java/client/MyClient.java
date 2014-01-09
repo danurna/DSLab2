@@ -125,9 +125,10 @@ public class MyClient {
 
         try {
             proxyPubKey =  MyUtils.getPublicKeyForPath(proxyPubKeyPath);
+            throw new IOException("bal");
         } catch (IOException e) {
-            System.err.println("Could not read proxy's public key.");
-            return false;
+            System.err.println("Could not read proxy's public key. Authentication won't work without it.");
+            proxyPubKey = null;
         }
 
         return true;
@@ -210,6 +211,10 @@ public class MyClient {
 
         //If login request, we need to authenticate first.
         if(request instanceof LoginRequest){
+            //If there is no public key set, we can not proceed.
+            if( proxyPubKey == null ){
+                return null;
+            }
             clientPrivateKey = readPrivateKey(keysDir+"/"+((LoginRequest) request).getUsername()+".pem");
             if(clientPrivateKey == null){
                 return null;
