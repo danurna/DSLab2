@@ -481,10 +481,10 @@ public class MyProxy {
     private PrivateKey readPrivateKey(String path){
         PrivateKey ret = null;
         try {
-            ret = MyUtils.getPrivateKeyForPath(path);
+            ret = MyUtils.getPrivateKeyForPathAndPassword(path, "12345");
         } catch (IOException e) {
             //Wrong usage or file does not exist.
-            System.err.println("Something went wrong on reading proxy's private key.");
+            System.err.println("Something went wrong on reading proxy's private key.\n");
             return null;
         }
         return ret;

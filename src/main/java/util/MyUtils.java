@@ -186,7 +186,6 @@ public class MyUtils {
                 return password.toCharArray();
             }
         });
-
         KeyPair keyPair = (KeyPair) in.readObject();
         PrivateKey privateKey = keyPair.getPrivate();
         return privateKey;
