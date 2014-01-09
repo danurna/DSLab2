@@ -18,8 +18,6 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.ArrayList;
@@ -483,13 +481,10 @@ public class MyProxy {
     private PrivateKey readPrivateKey(String path){
         PrivateKey ret = null;
         try {
-            //TODO: Change to productive code for Abgabe.
-            //ret = MyUtils.getPrivateKeyForPath(path);
-            ret = MyUtils.getPrivateKeyForPathAndPassword(path, "12345");
+            ret = MyUtils.getPrivateKeyForPath(path);
         } catch (IOException e) {
-            e.printStackTrace();
             //Wrong usage or file does not exist.
-            System.err.println("Something went wrong on reading proxy's private key.\n");
+            System.err.println("Something went wrong on reading proxy's private key.");
             return null;
         }
         return ret;
